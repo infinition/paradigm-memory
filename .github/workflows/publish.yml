@@ -23,12 +23,10 @@ jobs:
       - run: npm test
         env:
           PARADIGM_MEMORY_AUTOWARM: '0'
-      - run: npm publish --workspace @paradigm-memory/memory-core --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: npm publish --workspace @paradigm-memory/memory-mcp --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: npm publish --workspace @paradigm-memory/memory-cli --provenance --access public
+      - name: Publish to NPM
+        run: |
+          npm publish --workspace @paradigm-memory/memory-core --provenance --access public
+          npm publish --workspace @paradigm-memory/memory-mcp --provenance --access public
+          npm publish --workspace @paradigm-memory/memory-cli --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
