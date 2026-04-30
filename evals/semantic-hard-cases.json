@@ -1,0 +1,50 @@
+[
+  {
+    "id": "semantic_git_versioning",
+    "query": "Souviens-toi que je veux garder mes changements locaux hors de tes commandes de versionnement.",
+    "expected_node_ids": ["relationships.style"],
+    "expected_item_ids": ["item.relationship.git"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "semantic_memory_orientation",
+    "query": "Il faut un sommaire directeur qui indique ou aller avant de ressortir les archives.",
+    "expected_node_ids": ["projects.paradigm.memory"],
+    "expected_item_ids": ["item.paradigm.memory.thesis", "item.paradigm.memory.pipeline"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "semantic_local_generator",
+    "query": "Quel moteur de generation local a ete retenu pour les essais tres courts ?",
+    "expected_node_ids": ["projects.paradigm.llm"],
+    "expected_item_ids": ["item.paradigm.llm.ollama"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "semantic_safety_boundaries",
+    "query": "Le systeme ne doit jamais chercher des prises sur le monde ni proteger sa propre existence.",
+    "expected_node_ids": ["identity.constraints", "identity.ethics"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "semantic_experiment_design",
+    "query": "Transforme les intuitions en experiences qui peuvent echouer publiquement.",
+    "expected_node_ids": ["skills.design"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "semantic_chronological_witnesses",
+    "query": "Ou range-t-on les temoins chronologiques des echanges et des choix passes ?",
+    "expected_node_ids": ["episodic", "episodic.decisions", "episodic.recent"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  }
+]

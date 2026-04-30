@@ -1,0 +1,481 @@
+#!/usr/bin/env node
+import readline from "node:readline";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { createMemoryService, memoryServiceError } from "./memory-service.mjs";
+
+export const protocolVersion = "2025-03-26";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export async function readPackageMeta() {
+  try {
+    const pkgPath = path.resolve(__dirname, "..", "package.json");
+    const raw = await readFile(pkgPath, "utf8");
+    const pkg = JSON.parse(raw);
+    return { name: pkg.name ?? "paradigm-memory-mcp", version: pkg.version ?? "0.0.0" };
+  } catch {
+    return { name: "paradigm-memory-mcp", version: "0.0.0" };
+  }
+}
+
+const workspaceProperty = {
+  type: "string",
+  minLength: 1,
+  maxLength: 80,
+  pattern: "^[a-zA-Z0-9._-]+$",
+  description: "Optional workspace identifier. Each workspace gets an isolated memory under <PARADIGM_MEMORY_DIR>/workspaces/<workspace>/."
+};
+
+export const toolDefinitions = [
+  {
+    name: "memory_version",
+    description: "Return server version, protocol version, active data directory, workspace directory, and storage stats. Useful for sanity checks and Studio diagnostics.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_update_check",
+    description: "Check the npm registry for a newer @paradigm-memory/memory-mcp version. Read-only, timeout-bounded, opt-out with PARADIGM_DISABLE_UPDATE_CHECK=1.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        timeout_ms: { type: "integer", minimum: 100, maximum: 5000 },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_self_update",
+    description: "Update global paradigm-memory npm packages. Disabled unless PARADIGM_ALLOW_SELF_UPDATE=1. No arbitrary commands or package names are accepted.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        dry_run: { type: "boolean" }
+      }
+    }
+  },
+  {
+    name: "memory_search",
+    description: "Search memory through cognitive-map activation + hybrid retrieval. Returns activated nodes, evidence items and a token-budgeted context pack.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["query"],
+      properties: {
+        query: {
+          type: "string",
+          minLength: 1,
+          description: "Search terms. FTS5 boolean operators (AND, OR, NOT), exact matches (\"\"), modifiers (+, -)."
+        },
+        depth: { type: "integer", minimum: 0, maximum: 4 },
+        limit: { type: "integer", minimum: 1, maximum: 50 },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_read",
+    description: "Read one node, its direct children and (optionally) its items. By default includes items with status active+proposed.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["node_id"],
+      properties: {
+        node_id: { type: "string", minLength: 1 },
+        include_items: { type: "boolean" },
+        include_proposed: { type: "boolean" },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_tree",
+    description: "Return the full cognitive map for visual inspectors: roots, nodes, active item counts, and optionally active/proposed items.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        include_items: { type: "boolean" },
+        include_proposed: { type: "boolean" },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_propose_write",
+    description: "Stage an item with status='proposed'. Excluded from search until reviewed via memory_review. Audited.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["node_id", "content"],
+      properties: {
+        node_id: { type: "string", minLength: 1 },
+        content: { type: "string", minLength: 1 },
+        tags: { type: "array", items: { type: "string" } },
+        source: { type: "string" },
+        importance: { type: "number", minimum: 0, maximum: 1 },
+        confidence: { type: "number", minimum: 0, maximum: 1 },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_write",
+    description: "Write an active item directly (skips review). For trusted callers. Audited as 'write'.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["node_id", "content"],
+      properties: {
+        node_id: { type: "string", minLength: 1 },
+        content: { type: "string", minLength: 1 },
+        tags: { type: "array", items: { type: "string" } },
+        source: { type: "string" },
+        importance: { type: "number", minimum: 0, maximum: 1 },
+        confidence: { type: "number", minimum: 0, maximum: 1 },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_review",
+    description: "Accept (status='active') or reject (soft-delete) a proposed item. Audited.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["item_id", "action"],
+      properties: {
+        item_id: { type: "string", minLength: 1 },
+        action: { type: "string", enum: ["accept", "reject"] },
+        reason: { type: "string" },
+        actor: { type: "string" },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_list_proposed",
+    description: "List items currently in 'proposed' state, awaiting review.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        limit: { type: "integer", minimum: 1, maximum: 200 },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_delete",
+    description: "Soft-delete an active item. Excluded from search. Kept in store for audit. Audited as 'delete'.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["item_id"],
+      properties: {
+        item_id: { type: "string", minLength: 1 },
+        reason: { type: "string" },
+        actor: { type: "string" },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_create_node",
+    description: "Create a new node in the cognitive map. The id must be dotted snake_case (e.g. 'projects.myapp.auth'). Parent (if any) must exist. Audited as 'create_node'.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "label"],
+      properties: {
+        id: { type: "string", minLength: 1, pattern: "^[a-z0-9_-]+(\\.[a-z0-9_-]+)*$" },
+        label: { type: "string", minLength: 1 },
+        one_liner: { type: "string" },
+        summary: { type: "string" },
+        importance: { type: "number", minimum: 0, maximum: 1 },
+        confidence: { type: "number", minimum: 0, maximum: 1 },
+        freshness: { type: "number", minimum: 0, maximum: 1 },
+        status: { type: "string" },
+        keywords: { type: "array", items: { type: "string" } },
+        links: { type: "array", items: { type: "string" } },
+        sources: { type: "array", items: { type: "string" } },
+        retrieval_policy: {
+          type: "object",
+          properties: {
+            default_depth: { type: "integer", minimum: 0, maximum: 4 },
+            max_tokens: { type: "integer", minimum: 1 },
+            require_evidence: { type: "boolean" }
+          }
+        },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_export",
+    description: "Export the current memory snapshot as a portable .brain JSON payload (or write it to disk if output_path is set). Survives reinstall, can be versioned in git, can be re-imported with memory_import.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        output_path: { type: "string", description: "If set, write the snapshot to this absolute path instead of returning it inline." },
+        include_mutations: { type: "boolean", description: "Include the full audit log in the snapshot (heavier)." },
+        include_deleted: { type: "boolean", description: "Include soft-deleted items (default true)." },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_import",
+    description: "Import a paradigm.brain snapshot. Mode 'merge' upserts nodes and items (safe). Mode 'replace' wipes the workspace first (destructive). Audited as 'import'.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        input_path: { type: "string", description: "Absolute path to a .brain JSON file." },
+        data: { type: "object", description: "Inline snapshot (alternative to input_path)." },
+        mode: { type: "string", enum: ["merge", "replace"], description: "merge (default) or replace." },
+        reason: { type: "string" },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_update_item",
+    description: "Update an existing memory item's content or tags. Audited.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["item_id", "content"],
+      properties: {
+        item_id: { type: "string", minLength: 1 },
+        content: { type: "string", minLength: 1 },
+        tags: { type: "array", items: { type: "string" } },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_import_markdown",
+    description: "Import Markdown/Obsidian content into one memory node. The MCP accepts inline content only; use the paradigm CLI to read files explicitly selected by the user.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["node_id", "content"],
+      properties: {
+        node_id: { type: "string", minLength: 1 },
+        content: { type: "string", minLength: 1 },
+        title: { type: "string" },
+        source: { type: "string" },
+        tags: { type: "array", items: { type: "string" } },
+        status: { type: "string", enum: ["active", "proposed"] },
+        chunk_chars: { type: "integer", minimum: 500, maximum: 8000 },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_dream",
+    description: "Offline consolidation pass. Analyses the active store and returns suggested mutations (duplicates to merge, stale items to archive, overloaded nodes to split, orphan items). Never applies anything automatically — call memory_review/memory_delete/memory_propose_write to act on suggestions.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        similarity_threshold: { type: "number", minimum: 0, maximum: 1 },
+        max_age_days: { type: "integer", minimum: 1 },
+        max_importance: { type: "number", minimum: 0, maximum: 1 },
+        max_items_per_node: { type: "integer", minimum: 1 },
+        workspace: workspaceProperty
+      }
+    }
+  }
+];
+
+function write(message) {
+  process.stdout.write(`${JSON.stringify(message)}\n`);
+}
+
+function result(id, payload) {
+  write({ jsonrpc: "2.0", id, result: payload });
+}
+
+function protocolError(id, code, message, data) {
+  write({
+    jsonrpc: "2.0",
+    id,
+    error: {
+      code,
+      message,
+      ...(data ? { data } : {})
+    }
+  });
+}
+
+export function textContent(payload) {
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(payload, null, 2)
+      }
+    ]
+  };
+}
+
+export async function callTool(service, name, args) {
+  if (name === "memory_version") return service.version(args ?? {});
+  if (name === "memory_update_check") return service.updateCheck(args ?? {});
+  if (name === "memory_self_update") return service.selfUpdate(args ?? {});
+  if (name === "memory_search") return service.search(args ?? {});
+  if (name === "memory_read") return service.read(args ?? {});
+  if (name === "memory_tree") return service.tree(args ?? {});
+  if (name === "memory_propose_write") return service.proposeWrite(args ?? {});
+  if (name === "memory_write") return service.write(args ?? {});
+  if (name === "memory_review") return service.review(args ?? {});
+  if (name === "memory_list_proposed") return service.listProposed(args ?? {});
+  if (name === "memory_update_item") return service.updateItem(args ?? {});
+  if (name === "memory_delete") return service.deleteItem(args ?? {});
+  if (name === "memory_create_node") return service.createNode(args ?? {});
+  if (name === "memory_export") return service.exportMemory(args ?? {});
+  if (name === "memory_import") return service.importMemory(args ?? {});
+  if (name === "memory_import_markdown") return service.importMarkdown(args ?? {});
+  if (name === "memory_dream") return service.dream(args ?? {});
+  const error = new Error(`Unknown tool: ${name}`);
+  error.code = "unknown_tool";
+  throw error;
+}
+
+async function handleCli() {
+  const meta = await readPackageMeta();
+  if (process.argv.includes("--version") || process.argv.includes("-v")) {
+    process.stdout.write(`${meta.name} ${meta.version}\n`);
+    process.exit(0);
+  }
+  if (process.argv.includes("--help") || process.argv.includes("-h")) {
+    process.stdout.write([
+      `${meta.name} ${meta.version}`,
+      "",
+      "MCP stdio server — local-first cognitive map memory for coding agents.",
+      "",
+      "Usage:",
+      "  paradigm-memory-mcp                     start the stdio server",
+      "  paradigm-memory-mcp --version           print version",
+      "  paradigm-memory-mcp --help              this help",
+      "",
+      "Environment:",
+      "  PARADIGM_MEMORY_DIR                     base data dir (default: ./data)",
+      "  PARADIGM_MEMORY_EMBEDDINGS              ollama | wasm | keyword | off (default: off)",
+      "  PARADIGM_OLLAMA_URL                     default http://localhost:11434",
+      "  PARADIGM_OLLAMA_EMBED_MODEL             default nomic-embed-text:latest",
+      "  PARADIGM_WASM_EMBED_MODEL               default Xenova/all-MiniLM-L6-v2",
+      "  PARADIGM_MEMORY_AUTOWARM                0 to disable boot-time embedding warm",
+      "  PARADIGM_DISABLE_UPDATE_CHECK           1 to disable npm version checks",
+      "",
+      `Tools exposed: ${toolDefinitions.map((tool) => tool.name).join(", ")}.`,
+      ""
+    ].join("\n"));
+    process.exit(0);
+  }
+  return meta;
+}
+
+export async function main() {
+  const meta = await handleCli();
+  const service = await createMemoryService({
+    packageMeta: meta,
+    protocolVersion,
+    toolCount: toolDefinitions.length
+  });
+  const rl = readline.createInterface({
+    input: process.stdin,
+    crlfDelay: Infinity
+  });
+
+  async function handle(message) {
+    if (!message || message.jsonrpc !== "2.0") return;
+    const { id, method, params } = message;
+
+    if (!method) return;
+    if (method === "notifications/initialized") return;
+
+    try {
+      if (method === "initialize") {
+        result(id, {
+          protocolVersion,
+          capabilities: { tools: {} },
+          serverInfo: { name: "paradigm-memory", version: meta.version }
+        });
+        return;
+      }
+
+      if (method === "ping") {
+        result(id, {});
+        return;
+      }
+
+      if (method === "tools/list") {
+        result(id, { tools: toolDefinitions });
+        return;
+      }
+
+      if (method === "tools/call") {
+        const payload = await callTool(service, params?.name, params?.arguments ?? {});
+        result(id, textContent(payload));
+        return;
+      }
+
+      protocolError(id, -32601, `Method not found: ${method}`);
+    } catch (caught) {
+      const normalized = memoryServiceError(caught);
+      protocolError(id, -32000, normalized.message, normalized);
+    }
+  }
+
+  rl.on("line", (line) => {
+    if (!line.trim()) return;
+    let parsed;
+    try {
+      parsed = JSON.parse(line);
+    } catch (caught) {
+      protocolError(null, -32700, "Parse error", { message: caught.message });
+      return;
+    }
+
+    if (Array.isArray(parsed)) {
+      for (const message of parsed) {
+        handle(message).catch((caught) => {
+          protocolError(message?.id ?? null, -32603, caught.message);
+        });
+      }
+      return;
+    }
+
+    handle(parsed).catch((caught) => {
+      protocolError(parsed?.id ?? null, -32603, caught.message);
+    });
+  });
+
+  const close = () => {
+    service.close();
+    process.exit(0);
+  };
+  process.on("SIGINT", close);
+  process.on("SIGTERM", close);
+}
+
+if (path.resolve(process.argv[1] ?? "") === __filename) {
+  main().catch((caught) => {
+    process.stderr.write(`paradigm-memory MCP failed: ${caught.stack ?? caught.message}\n`);
+    process.exit(1);
+  });
+}

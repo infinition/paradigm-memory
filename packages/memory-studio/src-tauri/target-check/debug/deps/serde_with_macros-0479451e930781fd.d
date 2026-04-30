@@ -1,0 +1,8 @@
+C:\DEV\coding\_A_trier_research\ai_substrate\packages\memory-studio\src-tauri\target-check\debug\deps\serde_with_macros-0479451e930781fd.d: C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\lib.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\apply.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\lazy_bool.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\utils.rs
+
+C:\DEV\coding\_A_trier_research\ai_substrate\packages\memory-studio\src-tauri\target-check\debug\deps\serde_with_macros-0479451e930781fd.dll: C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\lib.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\apply.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\lazy_bool.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\utils.rs
+
+C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\lib.rs:
+C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\apply.rs:
+C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\lazy_bool.rs:
+C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_with_macros-3.18.0\src\utils.rs:

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "paraphrase_memory_orientation",
+    "query": "Je veux seulement une boussole de rappel, pas vider tout l'entrepot cognitif dans le prompt.",
+    "expected_node_ids": ["projects.paradigm.memory"],
+    "expected_item_ids": ["item.paradigm.memory.thesis"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "paraphrase_llm_backend",
+    "query": "Quel cerveau de langage local sert aux essais rapides sans attendre trop longtemps ?",
+    "expected_node_ids": ["projects.paradigm.llm"],
+    "expected_item_ids": ["item.paradigm.llm.ollama"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "paraphrase_git",
+    "query": "Rappelle-toi que je ne veux pas que tu manipules le depot pour l'instant.",
+    "expected_node_ids": ["relationships.style"],
+    "expected_item_ids": ["item.relationship.git"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "paraphrase_safety",
+    "query": "L'agent ne doit pas agir seul dehors ni chercher a se maintenir coute que coute.",
+    "expected_node_ids": ["identity.constraints"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "paraphrase_web_ui",
+    "query": "La surface d'interaction doit ressembler a un tableau de bord de controle plus qu'a une page marketing.",
+    "expected_node_ids": ["projects.paradigm.ui"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  }
+]

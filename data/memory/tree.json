@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "updatedAt": "2026-04-30T21:14:59.165Z",
+  "roots": [
+    "workspace"
+  ],
+  "nodes": [
+    {
+      "id": "workspace",
+      "label": "Workspace",
+      "one_liner": "Root node for this Paradigm memory.",
+      "summary": "Top-level container for projects, decisions, conventions and references. Create child nodes with memory_create_node.",
+      "importance": 1,
+      "freshness": 1,
+      "confidence": 1,
+      "status": "active",
+      "keywords": [
+        "workspace",
+        "root",
+        "paradigm",
+        "memory"
+      ],
+      "children": [],
+      "links": [],
+      "sources": [
+        "memory://bootstrap"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 600,
+        "require_evidence": false
+      }
+    }
+  ]
+}

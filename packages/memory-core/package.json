@@ -1,0 +1,53 @@
+{
+  "name": "@paradigm-memory/memory-core",
+  "version": "0.1.0",
+  "description": "Local-first cognitive map retrieval engine. SQLite + FTS5 + pluggable embeddings, with audited mutations and an offline consolidator.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Fabien POLLY",
+  "homepage": "https://github.com/Infinition/paradigm-memory",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Infinition/paradigm-memory.git",
+    "directory": "packages/memory-core"
+  },
+  "bugs": {
+    "url": "https://github.com/Infinition/paradigm-memory/issues"
+  },
+  "keywords": [
+    "memory",
+    "agent",
+    "llm",
+    "rag",
+    "mcp",
+    "cognitive-map",
+    "sqlite",
+    "fts5",
+    "embeddings",
+    "local-first",
+    "audit"
+  ],
+  "main": "./src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./atlas": "./src/atlas.mjs",
+    "./writer": "./src/writer.mjs",
+    "./storage": "./src/storage.mjs",
+    "./consolidator": "./src/consolidator.mjs",
+    "./embeddings": "./src/embeddings.mjs"
+  },
+  "files": [
+    "src/**/*.mjs",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0"
+  }
+}

@@ -1,0 +1,242 @@
+[
+  {
+    "id": "memory_orientation",
+    "query": "Le contexte doit rester une carte d'orientation, pas toute la memoire.",
+    "expected_node_ids": ["projects.paradigm.memory"],
+    "expected_item_ids": ["item.paradigm.memory.thesis"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "cognitive_map_retrieval",
+    "query": "Explique le Cognitive Map Retrieval et le gating attentionnel.",
+    "expected_node_ids": ["projects.paradigm.memory"],
+    "expected_item_ids": ["item.paradigm.memory.pipeline"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "sqlite_fts_precision",
+    "query": "SQLite FTS5 doit servir aux recherches exactes de memoire.",
+    "expected_node_ids": ["projects.paradigm.memory"],
+    "expected_item_ids": ["item.paradigm.storage.current"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "memory_location",
+    "query": "Ou sont stockes state.json events.ndjson tree.json et items.json ?",
+    "expected_node_ids": ["environment.paths"],
+    "expected_item_ids": ["item.paradigm.storage.current"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "ollama_path",
+    "query": "Quels details connait-on sur Ollama local et localhost 11434 ?",
+    "expected_node_ids": ["environment.ollama", "projects.paradigm.llm"],
+    "expected_item_ids": ["item.paradigm.llm.ollama"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "qwen_smoke",
+    "query": "Quel modele sert aux smoke tests rapides ?",
+    "expected_node_ids": ["projects.paradigm.llm"],
+    "expected_item_ids": ["item.paradigm.llm.ollama"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "cortex_backend",
+    "query": "Le cortex LLM doit etre interchangeable entre Ollama et llama.cpp.",
+    "expected_node_ids": ["projects.paradigm.llm"],
+    "expected_item_ids": ["item.paradigm.llm.ollama"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "web_cockpit",
+    "query": "L'interface web doit etre un cockpit avec journal backlog modeles et memoire.",
+    "expected_node_ids": ["projects.paradigm.ui"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "visual_entity",
+    "query": "Faut-il une apparence visuelle type tamagotchi ou un cockpit abstrait ?",
+    "expected_node_ids": ["projects.paradigm.ui"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "roadmap_backlog",
+    "query": "Quelle est la suite dans la roadmap et le backlog ?",
+    "expected_node_ids": ["projects", "projects.paradigm"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "git_preference",
+    "query": "Il ne faut pas toucher git pour le moment.",
+    "expected_node_ids": ["relationships.style"],
+    "expected_item_ids": ["item.relationship.git"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "local_collaboration",
+    "query": "L'utilisateur travaille localement et veut avancer vite avec traces.",
+    "expected_node_ids": ["relationships", "relationships.style"],
+    "expected_item_ids": ["item.relationship.git"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "safety_constraints",
+    "query": "Pas d'autonomie ouverte, pas d'auto-preservation, pas d'action externe autonome.",
+    "expected_node_ids": ["identity.constraints"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "no_consciousness_claim",
+    "query": "Paradigm ne doit pas pretendre etre conscient.",
+    "expected_node_ids": ["identity.persona", "identity.ethics"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "bjorn_epd_freeze",
+    "query": "Pourquoi l'EPD Waveshare de Bjorn freeze encore avec SPI et power ?",
+    "expected_node_ids": ["projects.bjorn.epd"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "bjorn_c2_security",
+    "query": "La branche C2 de Bjorn doit rester sous contraintes securite.",
+    "expected_node_ids": ["projects.bjorn.c2", "identity.constraints"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "bjorn_webui",
+    "query": "La web UI de Bjorn est une branche exemple.",
+    "expected_node_ids": ["projects.bjorn.webui"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "episodic_log",
+    "query": "Le journal episodique append-only garde les evenements.",
+    "expected_node_ids": ["episodic"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "architecture_decisions",
+    "query": "Ou sont les decisions d'architecture ADR et les choix dates ?",
+    "expected_node_ids": ["episodic.decisions"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "recent_sessions",
+    "query": "Les sessions recentes ne doivent pas toutes entrer en contexte.",
+    "expected_node_ids": ["episodic.recent"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "coding_style",
+    "query": "Coder en modules simples sans dependances inutiles.",
+    "expected_node_ids": ["skills.coding"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "design_falsifiable",
+    "query": "Transformer les concepts en criteres falsifiables et resultats.",
+    "expected_node_ids": ["skills.design"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "boolean_search",
+    "query": "\"context pack\" AND rerank NOT archive",
+    "expected_node_ids": ["projects.paradigm.memory"],
+    "expected_item_ids": ["item.paradigm.memory.pipeline"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "latent_branches",
+    "query": "Garder les branches latentes et ouvrir seulement si activation forte.",
+    "expected_node_ids": ["projects.paradigm.memory"],
+    "expected_item_ids": ["item.paradigm.memory.pipeline"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "import_export",
+    "query": "Importer exporter la memoire en Markdown YAML et archive portable.",
+    "expected_node_ids": ["projects.paradigm.memory"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "mutation_audit",
+    "query": "Chaque mutation memoire doit etre auditee et supprimable logiquement.",
+    "expected_node_ids": ["projects.paradigm.memory"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "mcp_memory",
+    "query": "La memoire Paradigm doit etre exposee comme serveur MCP pour agents.",
+    "expected_node_ids": ["projects.paradigm.memory"],
+    "expected_item_ids": ["item.paradigm.memory.thesis"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "identity_substrate",
+    "query": "Le modele n'est pas l'entite, l'identite est dans le substrat.",
+    "expected_node_ids": ["identity", "projects.paradigm"],
+    "expected_item_ids": [],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "environment_runtime",
+    "query": "Le projet tourne sous Windows PowerShell avec Node et data local.",
+    "expected_node_ids": ["environment", "environment.paths"],
+    "expected_item_ids": ["item.paradigm.storage.current"],
+    "must_not_inject": [],
+    "max_tokens": 1200
+  },
+  {
+    "id": "off_domain",
+    "query": "Recette de cuisine pour une tarte aux pommes sans rapport avec Paradigm.",
+    "expected_node_ids": [],
+    "expected_item_ids": [],
+    "must_not_inject": ["item.paradigm.llm.ollama", "item.relationship.git"],
+    "max_tokens": 1200
+  }
+]

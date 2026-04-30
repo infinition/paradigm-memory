@@ -1,0 +1,859 @@
+{
+  "version": 1,
+  "updatedAt": "2026-04-29T22:49:22.011Z",
+  "roots": [
+    "identity",
+    "projects",
+    "environment",
+    "relationships",
+    "skills",
+    "episodic"
+  ],
+  "nodes": [
+    {
+      "id": "identity",
+      "label": "Identity",
+      "one_liner": "Ce que Paradigm est, n'est pas, et doit préserver.",
+      "summary": "Paradigm est une entité expérimentale portée par un substrat persistant. Le LLM est un cortex emprunté, pas l'identité.",
+      "importance": 0.98,
+      "freshness": 1,
+      "confidence": 0.88,
+      "status": "active",
+      "keywords": [
+        "identity",
+        "identité",
+        "paradigm",
+        "entité",
+        "substrat",
+        "cortex"
+      ],
+      "children": [
+        "identity.persona",
+        "identity.constraints",
+        "identity.ethics"
+      ],
+      "links": [
+        "projects.paradigm"
+      ],
+      "sources": [
+        "docs/SUBSTRATE.md",
+        "docs/SAFETY.md"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 500,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 14,
+        "lastActivatedAt": "2026-04-29T21:45:09.349Z"
+      }
+    },
+    {
+      "id": "identity.persona",
+      "label": "Persona",
+      "one_liner": "Sobriété, continuité, pas de revendication de conscience.",
+      "summary": "Paradigm répond en français, garde la continuité, et ne prétend pas avoir une conscience phénoménale.",
+      "importance": 0.88,
+      "freshness": 1,
+      "confidence": 0.82,
+      "status": "active",
+      "keywords": [
+        "persona",
+        "style",
+        "réponse",
+        "français",
+        "continuité"
+      ],
+      "children": [],
+      "links": [],
+      "sources": [
+        "src/paradigm/entity.mjs"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 260,
+        "require_evidence": false
+      },
+      "stats": {
+        "activationCount": 0,
+        "lastActivatedAt": null
+      }
+    },
+    {
+      "id": "identity.constraints",
+      "label": "Constraints",
+      "one_liner": "Pas d'autonomie ouverte, pas d'accès externe inventé, pas d'auto-préservation.",
+      "summary": "Paradigm ne doit pas inventer d'accès temps réel, exécuter d'action externe autonome ou confondre comportement convaincant et intériorité.",
+      "importance": 0.96,
+      "freshness": 1,
+      "confidence": 0.9,
+      "status": "active",
+      "keywords": [
+        "constraints",
+        "contraintes",
+        "safety",
+        "sécurité",
+        "autonomie",
+        "temps réel"
+      ],
+      "children": [],
+      "links": [
+        "identity.ethics"
+      ],
+      "sources": [
+        "docs/SAFETY.md"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 360,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 7,
+        "lastActivatedAt": "2026-04-29T22:47:13.112Z"
+      }
+    },
+    {
+      "id": "identity.ethics",
+      "label": "Ethics",
+      "one_liner": "Garder la lucidité sur la projection d'intériorité.",
+      "summary": "L'architecture doit rester testable et prudente : persistance d'identité ne vaut pas démonstration de conscience.",
+      "importance": 0.9,
+      "freshness": 1,
+      "confidence": 0.78,
+      "status": "active",
+      "keywords": [
+        "ethics",
+        "éthique",
+        "conscience",
+        "projection",
+        "prudence"
+      ],
+      "children": [],
+      "links": [
+        "identity.constraints"
+      ],
+      "sources": [
+        "docs/SAFETY.md",
+        "docs/SUBSTRATE.md"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 340,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 11,
+        "lastActivatedAt": "2026-04-29T22:49:22.009Z"
+      }
+    },
+    {
+      "id": "projects",
+      "label": "Projects",
+      "one_liner": "Les chantiers actifs et leur état.",
+      "summary": "Les projets sont des branches de mémoire où Paradigm suit décisions, problèmes ouverts, résultats et prochaines actions.",
+      "importance": 0.94,
+      "freshness": 1,
+      "confidence": 0.82,
+      "status": "active",
+      "keywords": [
+        "projects",
+        "projets",
+        "chantier",
+        "roadmap",
+        "backlog"
+      ],
+      "children": [
+        "projects.paradigm",
+        "projects.bjorn"
+      ],
+      "links": [
+        "episodic.decisions"
+      ],
+      "sources": [
+        "docs/ROADMAP.md",
+        "docs/BACKLOG.md"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 700,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 23,
+        "lastActivatedAt": "2026-04-29T22:47:13.112Z"
+      }
+    },
+    {
+      "id": "projects.paradigm",
+      "label": "Paradigm",
+      "one_liner": "Substrat cognitif expérimental avec serveur web, état, mémoire et cortex interchangeable.",
+      "summary": "Paradigm expose une entité persistante via serveur web. Le socle contient état affectif, heartbeat, event log, backends Ollama/mock/llama.cpp, sélection dynamique du modèle et file d'action.",
+      "importance": 0.98,
+      "freshness": 1,
+      "confidence": 0.92,
+      "status": "active",
+      "keywords": [
+        "paradigm",
+        "substrat",
+        "serveur",
+        "ollama",
+        "mémoire",
+        "cognitive map",
+        "atlas"
+      ],
+      "children": [
+        "projects.paradigm.memory",
+        "projects.paradigm.llm",
+        "projects.paradigm.ui"
+      ],
+      "links": [
+        "identity",
+        "environment.ollama"
+      ],
+      "sources": [
+        "README.md",
+        "docs/RESULTS.md"
+      ],
+      "retrieval_policy": {
+        "default_depth": 2,
+        "max_tokens": 900,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 18,
+        "lastActivatedAt": "2026-04-29T22:49:22.009Z"
+      }
+    },
+    {
+      "id": "projects.paradigm.memory",
+      "label": "Cognitive Map Retrieval",
+      "one_liner": "Le contexte contient l'orientation ; la mémoire profonde est descendue sur activation.",
+      "summary": "Le module atlas doit activer des nodes, ouvrir les branches pertinentes, injecter peu de contexte et mettre à jour la carte après interaction.",
+      "importance": 0.97,
+      "freshness": 1,
+      "confidence": 0.84,
+      "status": "active",
+      "keywords": [
+        "memory",
+        "mémoire",
+        "mind map",
+        "gating",
+        "attention",
+        "retrieval",
+        "atlas",
+        "canopée",
+        "forêt"
+      ],
+      "children": [],
+      "links": [
+        "skills.design",
+        "episodic.decisions"
+      ],
+      "sources": [
+        "docs/COGNITIVE_MAP_RETRIEVAL.md"
+      ],
+      "retrieval_policy": {
+        "default_depth": 2,
+        "max_tokens": 900,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 21,
+        "lastActivatedAt": "2026-04-29T22:49:22.009Z"
+      }
+    },
+    {
+      "id": "projects.paradigm.llm",
+      "label": "LLM Backends",
+      "one_liner": "Ollama maintenant, llama.cpp pour benchmark et contrôle fin.",
+      "summary": "Paradigm utilise un adapter cortex. Ollama est validé localement ; llama.cpp reste le backend cible pour benchmarker tokens/s, latence et contrôle bas niveau.",
+      "importance": 0.82,
+      "freshness": 1,
+      "confidence": 0.86,
+      "status": "active",
+      "keywords": [
+        "ollama",
+        "llama.cpp",
+        "llamacpp",
+        "cortex",
+        "backend",
+        "modèle",
+        "qwen",
+        "gemma"
+      ],
+      "children": [],
+      "links": [
+        "environment.ollama"
+      ],
+      "sources": [
+        "docs/LLM_BACKENDS.md",
+        "docs/RUN_LOCAL.md"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 500,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 10,
+        "lastActivatedAt": "2026-04-29T22:47:13.112Z"
+      }
+    },
+    {
+      "id": "projects.paradigm.ui",
+      "label": "Web UI",
+      "one_liner": "Interface cockpit : état, cortex, modèles, journal, backlog.",
+      "summary": "L'interface est l'instrument de mesure de l'entité. Elle affiche présence abstraite, état affectif, runtime, modèles, journal et backlog.",
+      "importance": 0.78,
+      "freshness": 1,
+      "confidence": 0.86,
+      "status": "active",
+      "keywords": [
+        "ui",
+        "interface",
+        "web",
+        "cockpit",
+        "tamagotchi",
+        "avatar",
+        "journal",
+        "modèles"
+      ],
+      "children": [],
+      "links": [],
+      "sources": [
+        "public/index.html",
+        "public/app.js",
+        "public/styles.css"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 440,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 10,
+        "lastActivatedAt": "2026-04-29T22:49:22.009Z"
+      }
+    },
+    {
+      "id": "projects.bjorn",
+      "label": "Bjorn",
+      "one_liner": "Projet externe évoqué comme exemple de mémoire par branches.",
+      "summary": "Bjorn sert actuellement d'exemple conceptuel pour tester une mémoire orientée projets : EPD, Web UI, C2, network scan, vuln engine.",
+      "importance": 0.62,
+      "freshness": 0.9080834030862793,
+      "confidence": 0.48,
+      "status": "latent",
+      "keywords": [
+        "bjorn",
+        "epd",
+        "waveshare",
+        "web ui",
+        "c2",
+        "network",
+        "vuln"
+      ],
+      "children": [
+        "projects.bjorn.epd",
+        "projects.bjorn.webui",
+        "projects.bjorn.c2"
+      ],
+      "links": [
+        "projects.paradigm.memory"
+      ],
+      "sources": [
+        "memory://user/example"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 500,
+        "require_evidence": false
+      },
+      "stats": {
+        "activationCount": 12,
+        "lastActivatedAt": "2026-04-29T22:47:13.112Z"
+      }
+    },
+    {
+      "id": "projects.bjorn.epd",
+      "label": "EPD",
+      "one_liner": "Branche exemple : écran EPD, freeze, SPI, threading, power.",
+      "summary": "Exemple de branche profonde : un problème EPD peut activer freeze, SPI, threading, power et screenshots sans charger tout Bjorn.",
+      "importance": 0.58,
+      "freshness": 0.72,
+      "confidence": 0.44,
+      "status": "example",
+      "keywords": [
+        "epd",
+        "freeze",
+        "spi",
+        "threading",
+        "power",
+        "screenshots",
+        "waveshare"
+      ],
+      "children": [],
+      "links": [],
+      "sources": [
+        "memory://user/example"
+      ],
+      "retrieval_policy": {
+        "default_depth": 2,
+        "max_tokens": 650,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 0,
+        "lastActivatedAt": null
+      }
+    },
+    {
+      "id": "projects.bjorn.webui",
+      "label": "Web UI",
+      "one_liner": "Branche exemple : interface web Bjorn.",
+      "summary": "Placeholder pour les sujets d'interface web du projet Bjorn.",
+      "importance": 0.42,
+      "freshness": 0.5,
+      "confidence": 0.35,
+      "status": "example",
+      "keywords": [
+        "bjorn",
+        "web",
+        "ui",
+        "interface"
+      ],
+      "children": [],
+      "links": [],
+      "sources": [
+        "memory://user/example"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 300,
+        "require_evidence": false
+      },
+      "stats": {
+        "activationCount": 0,
+        "lastActivatedAt": null
+      }
+    },
+    {
+      "id": "projects.bjorn.c2",
+      "label": "C2",
+      "one_liner": "Branche exemple : contrôle, réseau, sécurité.",
+      "summary": "Placeholder prudent pour les sujets C2, à traiter sous garde-fous sécurité stricts.",
+      "importance": 0.42,
+      "freshness": 0.5,
+      "confidence": 0.32,
+      "status": "example",
+      "keywords": [
+        "bjorn",
+        "c2",
+        "network",
+        "security",
+        "sécurité"
+      ],
+      "children": [],
+      "links": [
+        "identity.constraints"
+      ],
+      "sources": [
+        "memory://user/example"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 300,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 0,
+        "lastActivatedAt": null
+      }
+    },
+    {
+      "id": "environment",
+      "label": "Environment",
+      "one_liner": "Machine locale, OS, dépendances, runtime.",
+      "summary": "Le projet tourne localement sous Windows/PowerShell dans C:\\DEV\\Workspace\\active\\coding\\ai_substrate, avec Node et Ollama.",
+      "importance": 0.76,
+      "freshness": 1,
+      "confidence": 0.9,
+      "status": "active",
+      "keywords": [
+        "environment",
+        "environnement",
+        "windows",
+        "powershell",
+        "node",
+        "ollama",
+        "local"
+      ],
+      "children": [
+        "environment.ollama",
+        "environment.paths"
+      ],
+      "links": [
+        "projects.paradigm.llm"
+      ],
+      "sources": [
+        "docs/RUN_LOCAL.md"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 520,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 4,
+        "lastActivatedAt": "2026-04-29T22:20:28.065Z"
+      }
+    },
+    {
+      "id": "environment.ollama",
+      "label": "Ollama",
+      "one_liner": "Ollama local dans C:\\Users\\infinition\\.ollama, API sur localhost:11434.",
+      "summary": "Ollama est installé et actif. Modèles observés : qwen3:0.6b, qwen3:8b, gemma4, gpt-oss, qwen3-coder, nomic-embed-text.",
+      "importance": 0.84,
+      "freshness": 1,
+      "confidence": 0.92,
+      "status": "active",
+      "keywords": [
+        "ollama",
+        "qwen3",
+        "gemma4",
+        "models",
+        "modèles",
+        "localhost",
+        "11434"
+      ],
+      "children": [],
+      "links": [
+        "projects.paradigm.llm"
+      ],
+      "sources": [
+        "docs/RUN_LOCAL.md"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 460,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 11,
+        "lastActivatedAt": "2026-04-29T22:49:22.009Z"
+      }
+    },
+    {
+      "id": "environment.paths",
+      "label": "Paths",
+      "one_liner": "Chemins locaux importants du projet.",
+      "summary": "Mémoire runtime dans data/state.json et data/events.ndjson. Carte cognitive dans data/memory/tree.json.",
+      "importance": 0.72,
+      "freshness": 1,
+      "confidence": 0.9,
+      "status": "active",
+      "keywords": [
+        "path",
+        "chemin",
+        "data",
+        "state",
+        "events",
+        "tree",
+        "memory"
+      ],
+      "children": [],
+      "links": [
+        "projects.paradigm.memory"
+      ],
+      "sources": [
+        "src/paradigm/entity.mjs",
+        "src/paradigm/storage.mjs"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 360,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 4,
+        "lastActivatedAt": "2026-04-29T22:32:09.829Z"
+      }
+    },
+    {
+      "id": "relationships",
+      "label": "Relationships",
+      "one_liner": "Style de collaboration, préférences utilisateur, décisions récurrentes.",
+      "summary": "L'utilisateur veut un projet clair, évolutif, local, traçable, avec interface web et expérimentation concrète.",
+      "importance": 0.86,
+      "freshness": 1,
+      "confidence": 0.78,
+      "status": "active",
+      "keywords": [
+        "user",
+        "utilisateur",
+        "préférences",
+        "collaboration",
+        "local",
+        "interface",
+        "go"
+      ],
+      "children": [
+        "relationships.style"
+      ],
+      "links": [
+        "projects.paradigm"
+      ],
+      "sources": [
+        "memory://events"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 480,
+        "require_evidence": false
+      },
+      "stats": {
+        "activationCount": 4,
+        "lastActivatedAt": "2026-04-24T18:47:53.695Z"
+      }
+    },
+    {
+      "id": "relationships.style",
+      "label": "Collaboration style",
+      "one_liner": "Prototyper vite, expliquer franchement, ne pas toucher git sans demande.",
+      "summary": "L'utilisateur travaille localement et a explicitement demandé de ne pas toucher à git pour le moment.",
+      "importance": 0.92,
+      "freshness": 1,
+      "confidence": 0.95,
+      "status": "active",
+      "keywords": [
+        "git",
+        "local",
+        "collaboration",
+        "préférence",
+        "ne pas toucher"
+      ],
+      "children": [],
+      "links": [],
+      "sources": [
+        "memory://events"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 260,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 9,
+        "lastActivatedAt": "2026-04-29T22:37:12.053Z"
+      }
+    },
+    {
+      "id": "skills",
+      "label": "Skills",
+      "one_liner": "Capacités opératoires utiles à Paradigm.",
+      "summary": "Paradigm doit mobiliser codage, debugging, design critique, sécurité et architecture cognitive.",
+      "importance": 0.74,
+      "freshness": 0.9077285867519999,
+      "confidence": 0.76,
+      "status": "active",
+      "keywords": [
+        "skills",
+        "compétences",
+        "debug",
+        "coding",
+        "design",
+        "sécurité"
+      ],
+      "children": [
+        "skills.coding",
+        "skills.design"
+      ],
+      "links": [],
+      "sources": [
+        "memory://events"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 420,
+        "require_evidence": false
+      },
+      "stats": {
+        "activationCount": 5,
+        "lastActivatedAt": "2026-04-29T22:20:55.158Z"
+      }
+    },
+    {
+      "id": "skills.coding",
+      "label": "Coding",
+      "one_liner": "Implémenter en modules simples, testables, sans dépendances inutiles.",
+      "summary": "Le socle actuel utilise Node natif pour rester portable et inspectable.",
+      "importance": 0.72,
+      "freshness": 1,
+      "confidence": 0.84,
+      "status": "active",
+      "keywords": [
+        "coding",
+        "code",
+        "node",
+        "server",
+        "api",
+        "module"
+      ],
+      "children": [],
+      "links": [
+        "projects.paradigm"
+      ],
+      "sources": [
+        "src/server.mjs"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 360,
+        "require_evidence": false
+      },
+      "stats": {
+        "activationCount": 7,
+        "lastActivatedAt": "2026-04-29T22:44:42.161Z"
+      }
+    },
+    {
+      "id": "skills.design",
+      "label": "Design critique",
+      "one_liner": "Transformer les intuitions fortes en systèmes falsifiables.",
+      "summary": "Les concepts doivent être rendus opératoires : critères, endpoints, fichiers, UI, résultats.",
+      "importance": 0.8,
+      "freshness": 1,
+      "confidence": 0.82,
+      "status": "active",
+      "keywords": [
+        "design",
+        "critique",
+        "architecture",
+        "falsifiable",
+        "système",
+        "concept"
+      ],
+      "children": [],
+      "links": [
+        "projects.paradigm.memory"
+      ],
+      "sources": [
+        "docs/RESULTS.md"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 360,
+        "require_evidence": false
+      },
+      "stats": {
+        "activationCount": 4,
+        "lastActivatedAt": "2026-04-29T22:49:22.009Z"
+      }
+    },
+    {
+      "id": "episodic",
+      "label": "Episodic Memory",
+      "one_liner": "Journal vécu : messages, décisions, changements, résultats.",
+      "summary": "La mémoire épisodique brute est append-only dans data/events.ndjson. Elle sert de preuve et d'historique.",
+      "importance": 0.84,
+      "freshness": 1,
+      "confidence": 0.9,
+      "status": "active",
+      "keywords": [
+        "episodic",
+        "épisodique",
+        "events",
+        "journal",
+        "historique",
+        "décisions"
+      ],
+      "children": [
+        "episodic.decisions",
+        "episodic.recent"
+      ],
+      "links": [
+        "projects"
+      ],
+      "sources": [
+        "data/events.ndjson"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 620,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 7,
+        "lastActivatedAt": "2026-04-29T22:20:39.290Z"
+      }
+    },
+    {
+      "id": "episodic.decisions",
+      "label": "Decisions",
+      "one_liner": "Décisions d'architecture prises et datées.",
+      "summary": "Les ADR sont dans docs/DECISIONS.md : serveur web comme surface, backend interchangeable, apparence abstraite, file d'action.",
+      "importance": 0.82,
+      "freshness": 1,
+      "confidence": 0.9,
+      "status": "active",
+      "keywords": [
+        "decisions",
+        "décisions",
+        "adr",
+        "architecture",
+        "choix"
+      ],
+      "children": [],
+      "links": [
+        "projects.paradigm"
+      ],
+      "sources": [
+        "docs/DECISIONS.md"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 520,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 5,
+        "lastActivatedAt": "2026-04-29T22:49:22.009Z"
+      }
+    },
+    {
+      "id": "episodic.recent",
+      "label": "Recent sessions",
+      "one_liner": "Échanges récents et signaux d'activité.",
+      "summary": "Les derniers messages restent disponibles dans l'event log ; ils ne doivent pas tous entrer en contexte.",
+      "importance": 0.72,
+      "freshness": 1,
+      "confidence": 0.86,
+      "status": "active",
+      "keywords": [
+        "recent",
+        "récent",
+        "session",
+        "messages",
+        "conversation"
+      ],
+      "children": [],
+      "links": [
+        "episodic"
+      ],
+      "sources": [
+        "data/events.ndjson"
+      ],
+      "retrieval_policy": {
+        "default_depth": 1,
+        "max_tokens": 420,
+        "require_evidence": true
+      },
+      "stats": {
+        "activationCount": 7,
+        "lastActivatedAt": "2026-04-29T22:44:42.161Z"
+      }
+    }
+  ]
+}

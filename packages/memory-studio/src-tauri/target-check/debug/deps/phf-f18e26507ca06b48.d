@@ -1,0 +1,11 @@
+C:\DEV\coding\_A_trier_research\ai_substrate\packages\memory-studio\src-tauri\target-check\debug\deps\phf-f18e26507ca06b48.d: C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\lib.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\map.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\ordered_map.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\ordered_set.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\set.rs
+
+C:\DEV\coding\_A_trier_research\ai_substrate\packages\memory-studio\src-tauri\target-check\debug\deps\libphf-f18e26507ca06b48.rlib: C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\lib.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\map.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\ordered_map.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\ordered_set.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\set.rs
+
+C:\DEV\coding\_A_trier_research\ai_substrate\packages\memory-studio\src-tauri\target-check\debug\deps\libphf-f18e26507ca06b48.rmeta: C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\lib.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\map.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\ordered_map.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\ordered_set.rs C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\set.rs
+
+C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\lib.rs:
+C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\map.rs:
+C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\ordered_map.rs:
+C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\ordered_set.rs:
+C:\Users\infinition\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.10.1\src\set.rs:

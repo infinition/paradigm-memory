@@ -1,0 +1,59 @@
+{
+  "name": "@paradigm-memory/memory-mcp",
+  "version": "0.1.0",
+  "description": "Local-first, audited memory MCP server for coding agents (Claude Code, Cursor, Cline, OpenCode, Continue). Cognitive-map retrieval, propose/review flow, dream consolidation.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Fabien POLLY",
+  "homepage": "https://github.com/Infinition/paradigm-memory",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Infinition/paradigm-memory.git",
+    "directory": "packages/memory-mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/Infinition/paradigm-memory/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "memory",
+    "agent",
+    "claude-code",
+    "cursor",
+    "cline",
+    "opencode",
+    "continue",
+    "rag",
+    "cognitive-map",
+    "local-first"
+  ],
+  "bin": {
+    "paradigm-memory-mcp": "./src/server.mjs",
+    "paradigm-memory-http": "./src/http-server.mjs"
+  },
+  "main": "./src/memory-service.mjs",
+  "exports": {
+    ".": "./src/memory-service.mjs",
+    "./server": "./src/server.mjs",
+    "./http-server": "./src/http-server.mjs"
+  },
+  "files": [
+    "src/**/*.mjs",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "start": "node src/server.mjs"
+  },
+  "dependencies": {
+    "@paradigm-memory/memory-core": "0.1.0",
+    "zod": "^4.3.6"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

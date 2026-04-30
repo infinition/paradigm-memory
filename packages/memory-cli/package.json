@@ -1,0 +1,12 @@
+{
+  "name": "@paradigm-memory/memory-cli",
+  "version": "0.1.0",
+  "description": "Cross-platform CLI for paradigm-memory: studio, update, export/import .brain, dream, uninstall.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Fabien POLLY",
+  "bin": { "paradigm": "./src/cli.mjs" },
+  "dependencies": { "@paradigm-memory/memory-mcp": "0.1.0" },
+  "engines": { "node": ">=22" },
+  "files": ["src/**/*.mjs", "README.md", "LICENSE"]
+}
