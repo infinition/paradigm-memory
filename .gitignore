@@ -1,20 +1,34 @@
 legacy/
-node_modules/
-**/node_modules/
+# Environments
 .env
 .env.local
+
+# Build artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+target*
+**/target*
+**/gen/
+
+
+# Data & Logs
 data/*.local.json
 data/events.ndjson
 data/state.json
 data/traces/
-data/memory/*.sqlite
-data/memory/*.sqlite-shm
-data/memory/*.sqlite-wal
 logs/
-dist/
-**/dist/
-**/src-tauri/target/
-**/src-tauri/gen/
+data_temp/
+scratch/
+
+# Databases
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+data/memory/*.sqlite*
+
+
 .DS_Store
 Thumbs.db
 data_temp/
