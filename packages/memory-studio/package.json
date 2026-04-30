@@ -1,6 +1,6 @@
 {
   "name": "@paradigm-memory/memory",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Desktop inspector for paradigm-memory. Tauri shell + React + react-flow nodal view, dogfooding paradigm-memory-mcp as a sidecar.",
   "type": "module",
@@ -31,5 +31,14 @@
     "@vitejs/plugin-react": "^4.3.0",
     "typescript": "^5.5.0",
     "vite": "^5.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/infinition/paradigm-memory",
+    "directory": "packages/memory-studio"
+  },
+  "homepage": "https://github.com/infinition/paradigm-memory",
+  "bugs": {
+    "url": "https://github.com/infinition/paradigm-memory/issues"
   }
 }

@@ -1,18 +1,18 @@
 {
   "name": "@paradigm-memory/memory-core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local-first cognitive map retrieval engine. SQLite + FTS5 + pluggable embeddings, with audited mutations and an offline consolidator.",
   "type": "module",
   "license": "Apache-2.0",
   "author": "Fabien POLLY",
-  "homepage": "https://github.com/Infinition/paradigm-memory",
+  "homepage": "https://github.com/infinition/paradigm-memory",
   "repository": {
     "type": "git",
     "url": "https://github.com/infinition/paradigm-memory",
     "directory": "packages/memory-core"
   },
   "bugs": {
-    "url": "https://github.com/Infinition/paradigm-memory/issues"
+    "url": "https://github.com/infinition/paradigm-memory/issues"
   },
   "keywords": [
     "memory",

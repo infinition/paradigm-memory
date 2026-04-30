@@ -476,7 +476,7 @@
       "id": "environment",
       "label": "Environment",
       "one_liner": "Machine locale, OS, dépendances, runtime.",
-      "summary": "Le projet tourne localement sous Windows/PowerShell dans C:\\DEV\\Workspace\\active\\coding\\ai_substrate, avec Node et Ollama.",
+      "summary": "Le projet tourne localement sous Windows/PowerShell dans C:\\DEV\\Workspace\\active\\coding\\paradigm-memory, avec Node et Ollama.",
       "importance": 0.76,
       "freshness": 1,
       "confidence": 0.9,
@@ -857,3 +857,4 @@
     }
   ]
 }
+

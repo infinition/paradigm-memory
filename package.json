@@ -1,12 +1,12 @@
 {
   "name": "paradigm-memory-workspace",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Monorepo for paradigm-memory: local-first navigable memory MCP for coding agents.",
   "license": "Apache-2.0",
   "author": "Fabien POLLY",
-  "homepage": "https://github.com/Infinition/paradigm-memory",
+  "homepage": "https://github.com/infinition/paradigm-memory",
   "repository": {
     "type": "git",
     "url": "https://github.com/infinition/paradigm-memory"
@@ -31,5 +31,8 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "bugs": {
+    "url": "https://github.com/infinition/paradigm-memory/issues"
   }
 }

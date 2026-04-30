@@ -1,18 +1,18 @@
 {
   "name": "@paradigm-memory/memory-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local-first, audited memory MCP server for coding agents (Claude Code, Cursor, Cline, OpenCode, Continue). Cognitive-map retrieval, propose/review flow, dream consolidation.",
   "type": "module",
   "license": "Apache-2.0",
   "author": "Fabien POLLY",
-  "homepage": "https://github.com/Infinition/paradigm-memory",
+  "homepage": "https://github.com/infinition/paradigm-memory",
   "repository": {
     "type": "git",
     "url": "https://github.com/infinition/paradigm-memory",
     "directory": "packages/memory-mcp"
   },
   "bugs": {
-    "url": "https://github.com/Infinition/paradigm-memory/issues"
+    "url": "https://github.com/infinition/paradigm-memory/issues"
   },
   "keywords": [
     "mcp",

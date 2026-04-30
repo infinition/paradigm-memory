@@ -1,6 +1,6 @@
 {
   "name": "@paradigm-memory/memory-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cross-platform CLI for paradigm-memory: studio, update, export/import .brain, dream, uninstall.",
   "type": "module",
   "license": "Apache-2.0",
@@ -18,5 +18,14 @@
     "src/**/*.mjs",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/infinition/paradigm-memory",
+    "directory": "packages/memory-cli"
+  },
+  "homepage": "https://github.com/infinition/paradigm-memory",
+  "bugs": {
+    "url": "https://github.com/infinition/paradigm-memory/issues"
+  }
 }
