@@ -68,6 +68,7 @@ test("MCP stdio smoke lists and calls every memory tool end-to-end", async () =>
       [
         "memory_create_node",
         "memory_delete",
+        "memory_delete_node",
         "memory_doctor",
         "memory_doctor_fix",
         "memory_dream",
@@ -76,6 +77,7 @@ test("MCP stdio smoke lists and calls every memory tool end-to-end", async () =>
         "memory_import",
         "memory_import_markdown",
         "memory_list_proposed",
+        "memory_move_item",
         "memory_mutations",
         "memory_propose_write",
         "memory_read",
@@ -89,6 +91,7 @@ test("MCP stdio smoke lists and calls every memory tool end-to-end", async () =>
         "memory_tree",
         "memory_update_check",
         "memory_update_item",
+        "memory_update_node",
         "memory_version",
         "memory_warm",
         "memory_write"
@@ -219,6 +222,32 @@ test("MCP stdio smoke lists and calls every memory tool end-to-end", async () =>
     assert.equal(directPayload.item.status, "active");
     assert.equal(directPayload.mutation.operation, "write");
 
+    const createdNode = await send("tools/call", {
+      name: "memory_create_node",
+      arguments: {
+        id: "projects.paradigm.memory.smoke_node",
+        label: "Smoke Node",
+        one_liner: "Temporary MCP smoke node."
+      }
+    });
+    assert.equal(parseToolPayload(createdNode).node.id, "projects.paradigm.memory.smoke_node");
+
+    const updatedNode = await send("tools/call", {
+      name: "memory_update_node",
+      arguments: {
+        id: "projects.paradigm.memory.smoke_node",
+        label: "Updated Smoke Node",
+        confidence: 0.9
+      }
+    });
+    assert.equal(parseToolPayload(updatedNode).node.label, "Updated Smoke Node");
+
+    const moved = await send("tools/call", {
+      name: "memory_move_item",
+      arguments: { item_id: directPayload.item.id, node_id: "projects.paradigm.memory.smoke_node" }
+    });
+    assert.equal(parseToolPayload(moved).success, true);
+
     const feedback = await send("tools/call", {
       name: "memory_feedback",
       arguments: { item_id: directPayload.item.id, signal: "useful" }
@@ -272,6 +301,12 @@ test("MCP stdio smoke lists and calls every memory tool end-to-end", async () =>
       arguments: { limit: 5 }
     });
     assert.ok(Array.isArray(parseToolPayload(snapshots).snapshots));
+
+    const deletedNode = await send("tools/call", {
+      name: "memory_delete_node",
+      arguments: { id: "projects.paradigm.memory.smoke_node" }
+    });
+    assert.equal(parseToolPayload(deletedNode).success, true);
   } finally {
     child.kill("SIGTERM");
     await once(child, "exit");

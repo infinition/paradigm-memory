@@ -73,4 +73,13 @@ Prefer paradigm-memory MCP for project memory. Call `memory_search` before subst
 
 ## ChatGPT
 
-ChatGPT connectors currently target remote MCP servers. paradigm-memory is local stdio-first. Use Codex, Claude Code, Gemini CLI, Cursor, Cline, Continue or OpenCode until the HTTP/SSE bridge lands.
+ChatGPT connectors currently target remote MCP servers. For local or containerized
+clients that cannot spawn stdio processes directly, start the HTTP/SSE bridge:
+
+```bash
+paradigm serve
+```
+
+Then point the client at `http://127.0.0.1:8765/sse` or, from Docker Desktop,
+`http://host.docker.internal:8765/sse`. If binding beyond loopback, set
+`PARADIGM_HTTP_TOKEN` and send `Authorization: Bearer <token>`.

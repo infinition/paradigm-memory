@@ -29,7 +29,11 @@ fi
 
 echo "[paradigm] Installing dependencies in $ROOT_DIR ..."
 (cd "$ROOT_DIR" && npm install --no-fund --no-audit)
-npm install -g "$ROOT_DIR/packages/memory-cli" --no-fund --no-audit
+npm install -g \
+  "$ROOT_DIR/packages/memory-core" \
+  "$ROOT_DIR/packages/memory-mcp" \
+  "$ROOT_DIR/packages/memory-cli" \
+  --no-fund --no-audit
 
 if [ ! -f "$PARADIGM_MEMORY_DIR/memory/tree.json" ]; then
   echo "[paradigm] Bootstrapping empty memory at $PARADIGM_MEMORY_DIR ..."

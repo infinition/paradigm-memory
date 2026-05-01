@@ -34,8 +34,10 @@ Write-Info "Installing dependencies in $rootDir ..."
 Push-Location $rootDir
 try {
     npm install --no-fund --no-audit
+    $corePackage = Join-Path $rootDir "packages\memory-core"
+    $mcpPackage = Join-Path $rootDir "packages\memory-mcp"
     $cliPackage = Join-Path $rootDir "packages\memory-cli"
-    npm install -g $cliPackage --no-fund --no-audit
+    npm install -g $corePackage $mcpPackage $cliPackage --no-fund --no-audit
 }
 finally {
     Pop-Location

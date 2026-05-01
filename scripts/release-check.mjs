@@ -34,6 +34,11 @@ for (const pkg of packages.values()) {
   assertEqual(pkg.version, rootVersion, `${pkg.file} version`);
 }
 
+const gitTag = process.env.GITHUB_REF_NAME ?? "";
+if (gitTag.startsWith("v")) {
+  assertEqual(gitTag, `v${rootVersion}`, "git tag");
+}
+
 const mcp = packages.get("@paradigm-memory/memory-mcp");
 const cli = packages.get("@paradigm-memory/memory-cli");
 assertEqual(mcp.dependencies["@paradigm-memory/memory-core"], rootVersion, "memory-mcp core dependency");

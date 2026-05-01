@@ -21,8 +21,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'npm'
-      - run: npm install
+      - run: npm ci
       - run: npm run lint
+      - run: npm run release:check
+      - run: npm run app:build
       - run: npm test
         env:
           PARADIGM_MEMORY_AUTOWARM: '0'
@@ -41,7 +43,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm install
+      - run: npm ci
       - run: npm run eval:memory
         env:
           PARADIGM_MEMORY_EMBEDDINGS: 'off'

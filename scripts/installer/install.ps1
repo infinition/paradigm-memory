@@ -57,7 +57,11 @@ else {
         Push-Location $tmp
         try {
             npm install --no-fund --no-audit
-            npm install -g (Join-Path $tmp "packages\memory-cli") --no-fund --no-audit
+            npm install -g `
+                (Join-Path $tmp "packages\memory-core") `
+                (Join-Path $tmp "packages\memory-mcp") `
+                (Join-Path $tmp "packages\memory-cli") `
+                --no-fund --no-audit
         } finally { Pop-Location }
     }
     finally {

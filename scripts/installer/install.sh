@@ -54,7 +54,11 @@ else
     || fail "git clone failed. Check network / branch '$PARADIGM_REF'."
   ( cd "$TMP" \
     && npm install --no-fund --no-audit \
-    && npm install -g "$TMP/packages/memory-cli" --no-fund --no-audit )
+    && npm install -g \
+      "$TMP/packages/memory-core" \
+      "$TMP/packages/memory-mcp" \
+      "$TMP/packages/memory-cli" \
+      --no-fund --no-audit )
 fi
 
 say "Memory dir: $PARADIGM_MEMORY_DIR (will be created on first use)"
