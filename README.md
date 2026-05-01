@@ -1,3 +1,6 @@
+<img width="428" height="407" alt="icon" src="https://github.com/user-attachments/assets/4727027a-4712-4781-a51b-fd784f5fece1" />
+
+
 # paradigm-memory
 
 > Local-first, audited memory MCP for Claude Code, OpenAI Codex, Gemini CLI, Cursor, Cline, Continue and OpenCode.
@@ -271,3 +274,14 @@ early evals. Ignore it if you only care about the memory MCP.
 ## License
 
 Apache-2.0 © 2026 Fabien POLLY.
+
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=infinition%2Fparadigm-memory&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=infinition/paradigm-memory&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=infinition/paradigm-memory&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=infinition/paradigm-memory&type=date&legend=top-left" />
+ </picture>
+</a>
