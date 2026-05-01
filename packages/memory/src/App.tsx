@@ -78,9 +78,14 @@ export default function App() {
       }
       setState({ nodes: tree.nodes, itemsByNode });
       setItemCounts(tree.item_counts ?? {});
-      if (!selectedId && tree.nodes.length > 0) {
-        setSelectedId(tree.roots?.[0] ?? tree.nodes[0].id);
-      }
+      
+      // Only set a default selection if nothing is selected AND it's the first load
+      // Or if the previously selected node no longer exists in the new tree.
+      setSelectedId((current) => {
+        if (current && tree.nodes.some(n => n.id === current)) return current;
+        if (tree.nodes.length > 0) return tree.roots?.[0] ?? tree.nodes[0].id;
+        return null;
+      });
     } catch (caught: any) {
       setMapError(String(caught?.message ?? caught));
       return;
@@ -92,7 +97,7 @@ export default function App() {
     if (v.data_dir) listWorkspaces(v.data_dir);
     mcp.doctor(workspace).then(setDoctor).catch(() => setDoctor(null));
     mcp.runtimeStatus().then(setRuntimeStatus).catch(() => setRuntimeStatus(null));
-  }, [workspace, listWorkspaces]);
+  }, [workspace, listWorkspaces, setSelectedId]); // Note: removing selectedId from deps to avoid timer reset, using functional update instead
 
   const loadSnapshots = useCallback(async () => {
     const result = await mcp.snapshots(workspace, 25);
