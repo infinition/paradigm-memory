@@ -12,7 +12,7 @@ direct SQL inserts) and the new items are *invisible* to:
 - `memory_dream` (no duplicate detection),
 - semantic search (`memory_search` with a paraphrase that doesn't share
   literal tokens),
-- the activation pulse in Studio.
+- the activation pulse in Paradigm Memory.
 
 **Cause.** Embeddings are computed *lazily* on the first query that touches an
 item. Bulk inserts skip this step. Until something requests the embedding, the
@@ -68,7 +68,7 @@ the parent node has no relevant keywords, the activation gate (default
 Items inside it are then filtered out at the gating step before retrieval
 even runs.
 
-**Fix today.** Edit the node manually in Studio (item editor → keywords) or
+**Fix today.** Edit the node manually in Paradigm Memory (item editor -> keywords) or
 via `memory_create_node` / forthcoming `memory_update_node`, and add the
 missing keywords.
 
@@ -133,7 +133,7 @@ silent partial updates to `near "...": syntax error`.
 
 ### 3.3 SQLite `database is locked`
 
-The MCP server, the CLI, the Studio sidecar and any custom script all open
+The MCP server, the CLI, Paradigm Memory and any custom script all open
 the *same* SQLite file. Under heavy concurrency you can hit `SQLITE_BUSY`.
 
 Mitigations baked into `@paradigm-memory/memory-core`:
@@ -205,6 +205,6 @@ Auto-snapshots are already taken before destructive MCP ops
 | Search returns nothing | `data/traces/*.json` — the activation step shows whether the query lit up any node. |
 | Dream finds zero duplicates after ingest | Run `paradigm doctor`, then `paradigm warm`. |
 | MCP client reports protocol errors | Stderr of the MCP process. The server intentionally writes nothing to stdout outside JSON-RPC. |
-| Studio is empty | Check `version.workspace_dir` in the top bar; you may be pointed at a fresh `~/.paradigm` while your data is in the repo's `data/`. |
+| Paradigm Memory is empty | Check `version.workspace_dir` in the top bar; you may be pointed at a fresh `~/.paradigm` while your data is in the repo's `data/`. |
 | `database is locked` | See § 3.3. |
 | Embeddings disabled silently | `paradigm version` — `PARADIGM_MEMORY_EMBEDDINGS` propagates to the `stats.embeddingProvider` field. |

@@ -187,6 +187,17 @@ fn resolve_mcp_candidates() -> Vec<(String, Vec<String>)> {
         candidates.push(("node".to_string(), vec![server]));
     }
 
+    let paradigm_home = env::var("PARADIGM_HOME")
+        .map(PathBuf::from)
+        .ok()
+        .or_else(|| dirs::home_dir().map(|home| home.join(".paradigm")));
+    if let Some(home) = paradigm_home {
+        let installed_server = home.join("app").join("current").join("packages").join("memory-mcp").join("src").join("server.mjs");
+        if installed_server.exists() {
+            candidates.push(("node".to_string(), vec![installed_server.to_string_lossy().to_string()]));
+        }
+    }
+
     let mut server = None;
     let mut here = env::current_exe().ok().and_then(|exe| exe.parent().map(PathBuf::from));
     if here.is_none() {
@@ -257,8 +268,8 @@ fn spawn_mcp(memory_dir: &PathBuf) -> Result<McpState, String> {
                 "Could not spawn the paradigm-memory MCP sidecar.\n\
                  Tried (in order):\n  - {}\n\
                  Last error: {}\n\
-                 Hint: install the CLI with `npm i -g @paradigm-memory/memory-cli`,\n\
-                 or run Memory from a source checkout (npm run app:dev).",
+                 Hint: install the CLI from GitHub Releases with the official installer,\n\
+                 or run Paradigm Memory from a source checkout (npm run app:dev).",
                 tried.join("\n  - "),
                 if last_error.is_empty() { "no candidate produced an error".to_string() } else { last_error }
             ));

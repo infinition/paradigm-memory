@@ -9,7 +9,7 @@
     "paradigm": "src/cli.mjs"
   },
   "dependencies": {
-    "@paradigm-memory/memory-mcp": "0.1.0"
+    "@paradigm-memory/memory-mcp": "0.1.1"
   },
   "engines": {
     "node": ">=22"

@@ -5,7 +5,7 @@ High-priority tasks and experiments to move Paradigm forward.
 ## Short-Term (Current Sprint)
 
 ### UI & UX
-- **Trace Visualization**: Add a panel in Studio to see exactly why a node was activated or an item was injected.
+- **Trace Visualization**: Add a panel in Paradigm Memory to see exactly why a node was activated or an item was injected.
 - **Node Keywords Editor**: Improve the UI for manually adding/editing keywords on a node.
 - **Auto-Keywords**: Implement a task that suggests keywords for a node based on its items' content (TF-IDF).
 

@@ -12,7 +12,7 @@ You are installing paradigm-memory, a local-first MCP memory server. Do this saf
      ```bash
      curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash
      ```
-   The installer auto-detects Node, installs `@paradigm-memory/memory-cli` globally, bootstraps `~/.paradigm`, and best-effort registers the MCP with `claude` / `codex` / `gemini` if those CLIs are on the user's PATH. There is **no** `git clone` step.
+   The installer auto-detects Node, downloads the matching CLI/MCP bundle from GitHub Releases, bootstraps `~/.paradigm`, and best-effort registers the MCP with `claude` / `codex` / `gemini` if those CLIs are on the user's PATH. There is **no** `git clone` step and no npm global install.
 3. Confirm the CLI works: `paradigm version`.
 4. Confirm the MCP server lists tools in the user's client (Claude Code, Codex, Gemini, Cursor, Cline, Continue, OpenCode). The user may need to restart their client once for the MCP to appear.
 5. After install, use `memory_search` before substantive work and `memory_propose_write` after durable facts / decisions / preferences.
@@ -20,7 +20,7 @@ You are installing paradigm-memory, a local-first MCP memory server. Do this saf
 
 Important:
 - Memory is stored in the user profile at `~/.paradigm` (Linux / macOS) or `%USERPROFILE%\.paradigm` (Windows) by default. Never delete it unless the user explicitly asks.
-- If `paradigm` is not on PATH after install, ask the user to restart their shell. npm-global bin path is added to PATH on first install on most setups; some shells need a reload.
+- If `paradigm` is not on PATH after install, ask the user to restart their shell. The installer adds `~/.paradigm/bin` to PATH when possible; some shells need a reload.
 - Override the install location with `PARADIGM_MEMORY_DIR=/path` (Bash) or `$env:PARADIGM_MEMORY_DIR = "..."` (PowerShell) before running the installer.
 
 Contributor / source-checkout install (only if the user explicitly says so):

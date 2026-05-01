@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # paradigm-memory installer (Linux / macOS).
 # - Verifies Node >= 22.
-# - Installs project deps.
+# - Installs project deps for source-checkout development.
 # - Registers the MCP with Claude Code (user scope) if `claude` is on PATH.
 # - Bootstraps an empty memory under ./.paradigm if none exists.
 #
@@ -29,11 +29,24 @@ fi
 
 echo "[paradigm] Installing dependencies in $ROOT_DIR ..."
 (cd "$ROOT_DIR" && npm install --no-fund --no-audit)
-npm install -g \
-  "$ROOT_DIR/packages/memory-core" \
-  "$ROOT_DIR/packages/memory-mcp" \
-  "$ROOT_DIR/packages/memory-cli" \
-  --no-fund --no-audit
+
+BIN_DIR="$HOME/.paradigm/bin"
+mkdir -p "$BIN_DIR"
+cat > "$BIN_DIR/paradigm" <<EOF
+#!/usr/bin/env bash
+export PARADIGM_MEMORY_DIR="$PARADIGM_MEMORY_DIR"
+exec node "$ROOT_DIR/packages/memory-cli/src/cli.mjs" "\$@"
+EOF
+cat > "$BIN_DIR/paradigm-memory-mcp" <<EOF
+#!/usr/bin/env bash
+export PARADIGM_MEMORY_DIR="$PARADIGM_MEMORY_DIR"
+exec node "$ROOT_DIR/packages/memory-mcp/src/server.mjs" "\$@"
+EOF
+chmod +x "$BIN_DIR/paradigm" "$BIN_DIR/paradigm-memory-mcp"
+case ":$PATH:" in
+  *":$BIN_DIR:"*) ;;
+  *) echo "[paradigm] Add $BIN_DIR to PATH, or restart after running the release installer." ;;
+esac
 
 if [ ! -f "$PARADIGM_MEMORY_DIR/memory/tree.json" ]; then
   echo "[paradigm] Bootstrapping empty memory at $PARADIGM_MEMORY_DIR ..."

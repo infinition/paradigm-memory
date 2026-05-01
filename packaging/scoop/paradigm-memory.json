@@ -1,16 +1,23 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local-first navigable memory MCP for coding agents.",
   "homepage": "https://github.com/infinition/paradigm-memory",
   "license": "Apache-2.0",
   "depends": "nodejs22",
-  "url": "https://registry.npmjs.org/@paradigm-memory/memory-cli/-/memory-cli-0.1.0.tgz",
-  "hash": "0cca6b71ebce1a6faab39b7c489b930dd0b6ef6279bf326376dfcbcf018371e4",
-  "extract_dir": "package",
+  "url": "https://github.com/infinition/paradigm-memory/releases/download/v0.1.1/paradigm-memory-cli-v0.1.1-windows-x64.tar.gz",
+  "hash": "REPLACE_WITH_GITHUB_RELEASE_SHA256",
   "bin": [
     [
-      "src/cli.mjs",
+      "bin/paradigm.cmd",
       "paradigm"
+    ],
+    [
+      "bin/paradigm-memory-mcp.cmd",
+      "paradigm-memory-mcp"
+    ],
+    [
+      "bin/paradigm-memory-http.cmd",
+      "paradigm-memory-http"
     ]
   ],
   "post_install": [
@@ -18,10 +25,9 @@
     "Write-Host 'Register MCP manually with Claude/Codex/Gemini using docs/MCP_CLIENTS.md from the repo.'"
   ],
   "checkver": {
-    "url": "https://registry.npmjs.org/@paradigm-memory/memory-cli/latest",
-    "jsonpath": "$.version"
+    "github": "https://github.com/infinition/paradigm-memory"
   },
   "autoupdate": {
-    "url": "https://registry.npmjs.org/@paradigm-memory/memory-cli/-/memory-cli-$version.tgz"
+    "url": "https://github.com/infinition/paradigm-memory/releases/download/v$version/paradigm-memory-cli-v$version-windows-x64.tar.gz"
   }
 }

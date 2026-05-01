@@ -97,7 +97,7 @@ The diamond: a local-first, audited, MCP-native cognitive memory.
 
 ### CLI — `@paradigm-memory/memory-cli`
 - ✅ Cross-platform `paradigm` binary (Node 22+).
-- ✅ `paradigm studio` — launches the Paradigm Memory desktop app from a source checkout.
+- ✅ `paradigm memory` — launches Paradigm Memory from a source checkout.
 - ✅ `paradigm update` — `npm install` (repo) or `npm update -g` (installed).
 - ✅ `paradigm uninstall` — unregisters `claude` / `codex` / `gemini` MCP entries;
   keeps memory unless `--purge-memory` is confirmed by typing `DELETE`.
@@ -112,8 +112,8 @@ The diamond: a local-first, audited, MCP-native cognitive memory.
 - ✅ Apache-2.0 license, Fabien POLLY 2026.
 - ✅ GitHub Actions CI on Linux / macOS / Windows + eval baseline upload
   (`.github/workflows/ci.yml`).
-- ✅ GitHub Actions npm publish on tag `v*.*.*`
-  (`.github/workflows/publish.yml`) for `memory-core`, `memory-mcp`,
+- ✅ GitHub Actions release on tag `v*.*.*`
+  (`.github/workflows/release.yml`) for Paradigm Memory and the CLI/MCP bundles.
   `memory-cli`, with `--provenance --access public`.
 - ✅ Node-only lint (`scripts/lint.mjs`) — parses every `.mjs` with `node --check`.
 - ✅ Test harness (`node --test`) — service / smoke / HTTP / unit tests.
@@ -125,8 +125,8 @@ The diamond: a local-first, audited, MCP-native cognitive memory.
   - **One-liner remote install** (`scripts/installer/install.sh`,
     `scripts/installer/install.ps1`) served via raw.githubusercontent.com.
     rustup-style UX: `curl … | bash` / `irm … | iex`. Verifies Node 22+,
-    `npm install -g @paradigm-memory/memory-cli` (from npm when published, GitHub
-    source fallback otherwise), bootstraps `~/.paradigm`, best-effort
+    downloads the matching CLI/MCP bundle from GitHub Releases, bootstraps
+    `~/.paradigm`, best-effort
     registers the MCP with `claude` / `codex` / `gemini` CLIs on PATH.
   - **Contributor installer** (`scripts/install.sh`, `scripts/install.ps1`)
     for source checkouts that wires the local repo as the MCP source.
@@ -134,7 +134,7 @@ The diamond: a local-first, audited, MCP-native cognitive memory.
 - ✅ `scripts/warm-embeddings.mjs` — pre-compute embedding cache from CLI.
 - ✅ `scripts/embedding-registry.mjs` — print recommended models from the CLI.
 - ✅ Packaging scaffolds: Homebrew (`packaging/homebrew/paradigm-memory.rb`),
-  Scoop (`packaging/scoop/paradigm-memory.json`) — waiting for npm tarball SHA.
+  Scoop (`packaging/scoop/paradigm-memory.json`) — to be pointed at GitHub Release assets.
 - ✅ `CHANGELOG.md`, `CONTRIBUTING.md`, `README.md` (English, dev-focused),
   `docs/INSTALL_PROMPT.md` (paste-into-agent install prompt),
   `docs/MCP_CLIENTS.md` (Claude / Codex / Gemini configs).
@@ -194,12 +194,10 @@ Non-breaking additions and quality improvements before v0.2.
 - 🟡 Document and fix the Windows env-var trap (`KEY=VALUE node ...` doesn't
   propagate via Git Bash on Windows; PowerShell `$env:` is the reliable path).
 - ✅ npm-publish workflow as GitHub Action (release on tag `v*.*.*`).
-- ✅ Homebrew/Scoop manifest updater — `npm run release:manifests` fetches the
-  published npm tarball and writes the SHA-256 into `packaging/homebrew` and
-  `packaging/scoop`. Before publish, `npm run release:check` validates versions
-  and warns about placeholder hashes.
-- ✅  the desktop app release workflow — `.github/workflows/studio-release.yml` (builds the desktop app) builds
-  Tauri bundles on Windows, macOS and Linux for tags or manual dispatch.
+- ✅ GitHub Release CLI bundles — `npm run release:cli` prepares the CLI/MCP tree
+  consumed by the release workflow and one-line installers.
+- ✅ The Paradigm Memory release workflow builds Tauri bundles on Windows, macOS
+  and Linux for tags or manual dispatch.
 - 🟡 Fully bundled MCP sidecar —  the desktop app now prefers a packaged
   `paradigm-memory-mcp(.exe)` beside the app/resources and falls back to source
   checkout or global npm. Remaining work: ship a real native sidecar artifact

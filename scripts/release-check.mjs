@@ -20,8 +20,6 @@ function assertEqual(actual, expected, label) {
   if (actual !== expected) fail(`${label}: expected ${expected}, got ${actual}`);
 }
 
-const strict = process.argv.includes("--strict");
-
 const packages = new Map();
 for (const file of packageFiles) {
   const fullPath = path.join(root, file);
@@ -44,14 +42,19 @@ const cli = packages.get("@paradigm-memory/memory-cli");
 assertEqual(mcp.dependencies["@paradigm-memory/memory-core"], rootVersion, "memory-mcp core dependency");
 assertEqual(cli.dependencies["@paradigm-memory/memory-mcp"], rootVersion, "memory-cli mcp dependency");
 
-const brew = await readFile(path.join(root, "packaging", "homebrew", "paradigm-memory.rb"), "utf8");
-const scoop = JSON.parse(await readFile(path.join(root, "packaging", "scoop", "paradigm-memory.json"), "utf8"));
-assertEqual(scoop.version, rootVersion, "scoop version");
-if (!brew.includes(`memory-cli-${rootVersion}.tgz`)) fail("Homebrew formula URL does not match package version");
-if (strict && (/REPLACE_WITH/.test(brew) || /REPLACE_WITH/.test(JSON.stringify(scoop)))) {
-  fail("Packaging manifests still contain placeholder hashes");
-} else if (/REPLACE_WITH/.test(brew) || /REPLACE_WITH/.test(JSON.stringify(scoop))) {
-  console.warn("[release-check] packaging hashes are placeholders; run npm run release:manifests after the npm package is published");
+const tauri = JSON.parse(await readFile(path.join(root, "packages", "memory", "src-tauri", "tauri.conf.json"), "utf8"));
+assertEqual(tauri.version, rootVersion, "tauri.conf.json version");
+
+const cargoToml = await readFile(path.join(root, "packages", "memory", "src-tauri", "Cargo.toml"), "utf8");
+const cargoVersion = cargoToml.match(/^version\s*=\s*"([^"]+)"/m)?.[1] ?? null;
+assertEqual(cargoVersion, rootVersion, "Cargo.toml version");
+
+const releaseWorkflow = await readFile(path.join(root, ".github", "workflows", "release.yml"), "utf8");
+if (/registry-url:\s*['"]https:\/\/registry\.npmjs\.org['"]/.test(releaseWorkflow)) {
+  fail("release workflow must not publish to npm");
+}
+if (/NPM_TOKEN|npm publish|release:publish/.test(releaseWorkflow)) {
+  fail("release workflow still references npm publishing");
 }
 
 if (!process.exitCode) console.log(`[release-check] ok for ${rootVersion}`);

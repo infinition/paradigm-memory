@@ -121,11 +121,11 @@ Tauri 2 + React + react-flow desktop inspector. Rust shell, sidecar bridge to `p
 
 ### Added — Distribution
 
-- **One-liner installers** (`scripts/installer/install.sh`, `scripts/installer/install.ps1`) served via `raw.githubusercontent.com`. rustup-style UX: `curl … | bash` / `irm … | iex`. Verifies Node 22+, installs from npm, falls back to GitHub source if the package is not yet published, bootstraps `~/.paradigm`, best-effort registers the MCP with `claude` / `codex` / `gemini`.
+- **One-liner installers** (`scripts/installer/install.sh`, `scripts/installer/install.ps1`) served via `raw.githubusercontent.com`. rustup-style UX: `curl ... | bash` / `irm ... | iex`. Verifies Node 22+, downloads CLI/MCP bundles from GitHub Releases, bootstraps `~/.paradigm`, best-effort registers the MCP with `claude` / `codex` / `gemini`.
 - Contributor installers (`scripts/install.sh`, `scripts/install.ps1`) for source checkouts that wire the local repo as the MCP source.
 - GitHub Actions CI on Linux / macOS / Windows + coverage on Ubuntu.
-- GitHub Actions npm publish on tag `v*.*.*` for `memory-core`, `memory-mcp`, `memory-cli`, with `--provenance --access public`.
-- Packaging scaffolds: Homebrew formula, Scoop manifest (filled by `npm run release:manifests` once the npm tarball SHA exists).
+- GitHub Actions release on tag `v*.*.*` for Windows / Linux / macOS app bundles and CLI/MCP archives.
+- Packaging scaffolds: Homebrew formula, Scoop manifest, both pointed at GitHub Release assets.
 
 ### Added — Storage & UX
 

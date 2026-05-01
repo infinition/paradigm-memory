@@ -44,9 +44,10 @@ PARADIGM_MEMORY_EMBEDDINGS=wasm npm run eval:memory   # WASM embeddings
 
 ## Releasing
 
-Tag `v*.*.*`, GitHub Actions runs the matrix. After green:
+Tag `v*.*.*`, GitHub Actions runs the matrix and publishes GitHub Release assets:
 
 ```bash
-npm publish --workspace @paradigm-memory/memory-core --access public
-npm publish --workspace @paradigm-memory/memory-mcp  --access public
+npm run release:check
+git tag vX.Y.Z
+git push origin vX.Y.Z
 ```

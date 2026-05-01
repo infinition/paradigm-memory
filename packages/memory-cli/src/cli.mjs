@@ -2,26 +2,26 @@
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, readdir, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createMemoryService, defaultDataDir } from "@paradigm-memory/memory-mcp";
 
-const VERSION = "0.1.0";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const packageJson = JSON.parse(readFileSync(path.join(__dirname, "..", "package.json"), "utf8"));
+const VERSION = packageJson.version;
 const rl = createInterface({ input, output });
 
 function usage() {
   console.log(`paradigm ${VERSION}
 
 Usage:
-  paradigm                 launch the Paradigm Memory desktop app from the repo
-  paradigm memory          same (alias)
+  paradigm                 print this help
+  paradigm memory          launch Paradigm Memory from a source checkout
   paradigm app             same (alias)
-  paradigm studio          legacy alias (deprecated)
-  paradigm update          update packages / reinstall deps
+  paradigm update          show update instructions
   paradigm uninstall       unregister MCP clients, keep memory by default
   paradigm export [file]   export a .brain snapshot
   paradigm import [file]   import a .brain snapshot
@@ -81,11 +81,12 @@ async function withService(fn) {
   });
   try { return await fn(service); } finally { service.close(); }
 }
-async function commandStudio() {
+async function commandMemory() {
   const root = findRepoRoot();
   if (!root) {
-    console.log("The Paradigm Memory desktop app is available from a source checkout for now.");
-    console.log("Run: git clone https://github.com/infinition/paradigm-memory && cd paradigm-memory && npm run app:dev");
+    console.log("Install or update Paradigm Memory from GitHub Releases:");
+    console.log("  Windows: irm https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex");
+    console.log("  Linux/macOS: curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash");
     return;
   }
   await run("npm", ["run", "app:dev"], { cwd: root, env: { ...process.env, PARADIGM_MEMORY_DIR: memoryDir() } });
@@ -93,8 +94,13 @@ async function commandStudio() {
 async function commandUpdate() {
   const root = findRepoRoot();
   if (root) await run("npm", ["install", "--no-fund", "--no-audit"], { cwd: root });
-  else await run("npm", ["update", "-g", "@paradigm-memory/memory-core", "@paradigm-memory/memory-mcp", "@paradigm-memory/memory-cli"]);
-  console.log("[paradigm] Updated. Memory data was not touched.");
+  else {
+    console.log("[paradigm] Re-run the GitHub Releases installer to update. Memory data will not be touched.");
+    console.log("Windows: irm https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex");
+    console.log("Linux/macOS: curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash");
+    return;
+  }
+  console.log("[paradigm] Dependencies refreshed. Memory data was not touched.");
 }
 async function commandUninstall() {
   for (const [bin, args] of [["claude", ["mcp", "remove", "paradigm-memory"]], ["codex", ["mcp", "remove", "paradigm-memory"]], ["gemini", ["mcp", "remove", "paradigm-memory"]]]) {
@@ -298,9 +304,9 @@ async function commandVersion() {
 }
 
 try {
-  const cmd = process.argv[2] ?? "studio";
+  const cmd = process.argv[2] ?? "help";
   if (["-h", "--help", "help"].includes(cmd)) usage();
-  else if (["studio", "app", "memory", "open", "launch"].includes(cmd)) await commandStudio();
+  else if (["app", "memory", "open", "launch"].includes(cmd)) await commandMemory();
   else if (cmd === "update") await commandUpdate();
   else if (cmd === "uninstall") await commandUninstall();
   else if (cmd === "export") await commandExport();

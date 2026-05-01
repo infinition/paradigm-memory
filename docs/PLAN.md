@@ -27,7 +27,7 @@ Target Vision: Paradigm is a persistent, navigable, and audited cognitive substr
 ### P0.3 - Observability (Traces)
 - Trace every request: intent, activation, retrieval, rerank, context pack, response.
 - Write to `data/traces/<request-id>.json`.
-- [Done] Integrated "Audit" tab in Studio.
+- [Done] Integrated "Audit" tab in Paradigm Memory.
 
 ---
 
@@ -62,7 +62,7 @@ Target Vision: Paradigm is a persistent, navigable, and audited cognitive substr
 ### P2.1 - The Dream Pass (Consolidator)
 - [Done] Detect overloaded nodes, empty nodes, duplicates, and orphan items.
 - [Done] Produce proposals, never automatic mutations.
-- [Done] UI in Studio to review and apply proposals.
+- [Done] UI in Paradigm Memory to review and apply proposals.
 
 ### P2.2 - Controlled Forgetting
 - Node policies: decay, pruning low importance, manual only.
@@ -70,7 +70,7 @@ Target Vision: Paradigm is a persistent, navigable, and audited cognitive substr
 
 ### P2.3 - Guarded Mutations
 - Pipeline: `candidate -> queue -> accept/edit/reject`.
-- [Done] Review UI with diff-like visibility in Studio.
+- [Done] Review UI with diff-like visibility in Paradigm Memory.
 
 ---
 
@@ -94,7 +94,7 @@ Target Vision: Paradigm is a persistent, navigable, and audited cognitive substr
 
 ### P5.2 - Distribution
 - [Done] Packages: `@paradigm-memory/memory-core`, `@paradigm-memory/memory-mcp`, `@paradigm-memory/memory`.
-- [Done] Compiled binaries for Studio.
+- [Done] Compiled binaries for Paradigm Memory.
 
 ---
 
@@ -104,6 +104,6 @@ Target Vision: Paradigm is a persistent, navigable, and audited cognitive substr
 P0 Testing & Traces
   -> P1.1 Hybrid Activation
   -> P2.1 Consolidation (Dream Pass)
-  -> P5.2 Studio Distribution
+  -> P5.2 Paradigm Memory Distribution
   -> P1.4 Context Budgeting
 ```

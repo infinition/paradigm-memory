@@ -30,7 +30,7 @@ The writer is cautious and heuristic:
 
 ## Human-in-the-loop
 
-Through Paradigm Studio, users can review proposed writes and deletions:
+Through Paradigm Memory, users can review proposed writes and deletions:
 ```text
 Candidate Item -> Accept / Edit / Reject
 ```

@@ -43,7 +43,7 @@ export const toolDefinitions = [
   },
   {
     name: "memory_update_check",
-    description: "Check the npm registry for a newer @paradigm-memory/memory-mcp version. Read-only, timeout-bounded, opt-out with PARADIGM_DISABLE_UPDATE_CHECK=1.",
+    description: "Check GitHub Releases for a newer Paradigm Memory version. Read-only, timeout-bounded, opt-out with PARADIGM_DISABLE_UPDATE_CHECK=1.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -55,7 +55,7 @@ export const toolDefinitions = [
   },
   {
     name: "memory_self_update",
-    description: "Update global paradigm-memory npm packages. Disabled unless PARADIGM_ALLOW_SELF_UPDATE=1. No arbitrary commands or package names are accepted.",
+    description: "Update Paradigm Memory from GitHub Releases by re-running the official installer. Disabled unless PARADIGM_ALLOW_SELF_UPDATE=1. No arbitrary commands are accepted.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -555,7 +555,7 @@ async function handleCli() {
       "  PARADIGM_OLLAMA_EMBED_MODEL             default nomic-embed-text:latest",
       "  PARADIGM_WASM_EMBED_MODEL               default Xenova/all-MiniLM-L6-v2",
       "  PARADIGM_MEMORY_AUTOWARM                0 to disable boot-time embedding warm",
-      "  PARADIGM_DISABLE_UPDATE_CHECK           1 to disable npm version checks",
+      "  PARADIGM_DISABLE_UPDATE_CHECK           1 to disable GitHub release checks",
       "",
       `Tools exposed: ${toolDefinitions.map((tool) => tool.name).join(", ")}.`,
       ""

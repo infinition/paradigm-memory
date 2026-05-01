@@ -1,70 +1,104 @@
 #!/usr/bin/env bash
-# paradigm-memory one-liner installer (Linux / macOS).
+# Paradigm Memory one-line installer for Linux / macOS.
 #
 #   curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash
 #
-# What it does:
-#   - Verifies Node 22+ and npm.
-#   - Installs `@paradigm-memory/memory-cli` globally (from npm, or from GitHub if
-#     the npm package is not yet published).
-#   - Bootstraps ~/.paradigm if it does not exist.
-#   - Best-effort registers the MCP with claude / codex / gemini CLIs that
-#     are already on PATH.
-#
-# Override the install location:
-#   PARADIGM_MEMORY_DIR=/path/to/.paradigm bash <(curl -fsSL …)
-#
-# Pin a version (defaults to the npm `latest` tag, or the repo `main` branch):
-#   PARADIGM_VERSION=0.1.0 bash <(curl -fsSL …)
+# Installs the CLI/MCP bundle from GitHub Releases into:
+#   ~/.paradigm/app/current
+# and creates command shims in:
+#   ~/.paradigm/bin
 
 set -euo pipefail
 
-REPO="infinition/paradigm-memory"
-NPM_PKG="@paradigm-memory/memory-cli"
-PARADIGM_MEMORY_DIR="${PARADIGM_MEMORY_DIR:-$HOME/.paradigm}"
-PARADIGM_VERSION="${PARADIGM_VERSION:-}"
-PARADIGM_REF="${PARADIGM_REF:-main}"
+REPO="${PARADIGM_REPO:-infinition/paradigm-memory}"
+PARADIGM_HOME="${PARADIGM_HOME:-$HOME/.paradigm}"
+PARADIGM_MEMORY_DIR="${PARADIGM_MEMORY_DIR:-$PARADIGM_HOME}"
+APP_DIR="$PARADIGM_HOME/app/current"
+BIN_DIR="$PARADIGM_HOME/bin"
+VERSION="${PARADIGM_VERSION:-}"
 
 cyan() { printf '\033[0;36m%s\033[0m' "$1"; }
 red()  { printf '\033[0;31m%s\033[0m' "$1"; }
 say()  { printf '%s %s\n' "$(cyan '[paradigm]')" "$*"; }
-fail() { printf '%s %s\n' "$(red   '[paradigm]')" "$*" >&2; exit 1; }
+fail() { printf '%s %s\n' "$(red '[paradigm]')" "$*" >&2; exit 1; }
 
-command -v node >/dev/null 2>&1 \
-  || fail "Node 22+ is required. Install it from https://nodejs.org or via nvm/fnm, then re-run."
-NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]')
-[ "$NODE_MAJOR" -lt 22 ] \
-  && fail "Node $NODE_MAJOR detected. Paradigm needs Node 22+ for the native sqlite module."
-command -v npm >/dev/null 2>&1 \
-  || fail "npm is not on PATH (it ships with Node)."
+command -v node >/dev/null 2>&1 || fail "Node 22+ is required. Install Node and re-run."
+NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+[ "$NODE_MAJOR" -lt 22 ] && fail "Node $NODE_MAJOR detected. Paradigm Memory needs Node 22+ for native SQLite."
+command -v curl >/dev/null 2>&1 || fail "curl is required."
+command -v tar >/dev/null 2>&1 || fail "tar is required."
 
-PKG_SPEC="$NPM_PKG"
-[ -n "$PARADIGM_VERSION" ] && PKG_SPEC="${NPM_PKG}@${PARADIGM_VERSION}"
+case "$(uname -s)" in
+  Darwin) OS="macos" ;;
+  Linux) OS="linux" ;;
+  *) fail "Unsupported OS: $(uname -s)" ;;
+esac
 
-if npm view "$PKG_SPEC" version >/dev/null 2>&1; then
-  say "Installing $PKG_SPEC from npm ..."
-  npm install -g "$PKG_SPEC" --no-fund --no-audit
+case "$(uname -m)" in
+  x86_64|amd64) ARCH="x64" ;;
+  arm64|aarch64) ARCH="arm64" ;;
+  *) fail "Unsupported architecture: $(uname -m)" ;;
+esac
+
+if [ -n "$VERSION" ]; then
+  RELEASE_API="https://api.github.com/repos/$REPO/releases/tags/v$VERSION"
 else
-  command -v git >/dev/null 2>&1 \
-    || fail "git is required to install from GitHub (npm package not yet published)."
-  say "Package not on npm yet — installing from github.com/$REPO@$PARADIGM_REF ..."
-  TMP=$(mktemp -d)
-  trap 'rm -rf "$TMP"' EXIT
-  git clone --depth 1 --branch "$PARADIGM_REF" "https://github.com/$REPO.git" "$TMP" >/dev/null 2>&1 \
-    || fail "git clone failed. Check network / branch '$PARADIGM_REF'."
-  ( cd "$TMP" \
-    && npm install --no-fund --no-audit \
-    && npm install -g \
-      "$TMP/packages/memory-core" \
-      "$TMP/packages/memory-mcp" \
-      "$TMP/packages/memory-cli" \
-      --no-fund --no-audit )
+  RELEASE_API="https://api.github.com/repos/$REPO/releases/latest"
 fi
 
-say "Memory dir: $PARADIGM_MEMORY_DIR (will be created on first use)"
-mkdir -p "$PARADIGM_MEMORY_DIR"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+RELEASE_JSON="$TMP/release.json"
 
-# Best-effort: register the MCP with any client already on PATH.
+say "Resolving GitHub Release from $RELEASE_API ..."
+curl -fsSL -H "User-Agent: paradigm-memory-installer" "$RELEASE_API" -o "$RELEASE_JSON"
+ASSET_URL="$(node - "$RELEASE_JSON" "$OS" "$ARCH" <<'NODE'
+const [file, os, arch] = process.argv.slice(2);
+const release = JSON.parse(await import("node:fs/promises").then(fs => fs.readFile(file, "utf8")));
+const re = new RegExp(`^paradigm-memory-cli-v.*-${os}-${arch}\\.tar\\.gz$`);
+const asset = release.assets?.find((candidate) => re.test(candidate.name));
+if (!asset) process.exit(2);
+console.log(asset.browser_download_url);
+NODE
+)" || fail "No $OS $ARCH CLI asset found in the selected release."
+
+ARCHIVE="$TMP/paradigm-memory-cli.tar.gz"
+mkdir -p "$APP_DIR" "$BIN_DIR" "$PARADIGM_MEMORY_DIR"
+say "Downloading $(basename "$ASSET_URL") ..."
+curl -fL -H "User-Agent: paradigm-memory-installer" "$ASSET_URL" -o "$ARCHIVE"
+rm -rf "$APP_DIR"
+mkdir -p "$APP_DIR"
+tar -xzf "$ARCHIVE" -C "$APP_DIR"
+
+cat > "$BIN_DIR/paradigm" <<EOF
+#!/usr/bin/env bash
+export PARADIGM_MEMORY_DIR="$PARADIGM_MEMORY_DIR"
+exec node "$APP_DIR/packages/memory-cli/src/cli.mjs" "\$@"
+EOF
+cat > "$BIN_DIR/paradigm-memory-mcp" <<EOF
+#!/usr/bin/env bash
+export PARADIGM_MEMORY_DIR="$PARADIGM_MEMORY_DIR"
+exec node "$APP_DIR/packages/memory-mcp/src/server.mjs" "\$@"
+EOF
+cat > "$BIN_DIR/paradigm-memory-http" <<EOF
+#!/usr/bin/env bash
+export PARADIGM_MEMORY_DIR="$PARADIGM_MEMORY_DIR"
+exec node "$APP_DIR/packages/memory-mcp/src/http-server.mjs" "\$@"
+EOF
+chmod +x "$BIN_DIR/paradigm" "$BIN_DIR/paradigm-memory-mcp" "$BIN_DIR/paradigm-memory-http"
+
+case ":$PATH:" in
+  *":$BIN_DIR:"*) ;;
+  *)
+    PROFILE="$HOME/.profile"
+    if [ -n "${ZSH_VERSION:-}" ]; then PROFILE="$HOME/.zshrc"; fi
+    if [ -n "${BASH_VERSION:-}" ]; then PROFILE="$HOME/.bashrc"; fi
+    printf '\nexport PATH="$HOME/.paradigm/bin:$PATH"\n' >> "$PROFILE"
+    export PATH="$BIN_DIR:$PATH"
+    say "Added $BIN_DIR to $PROFILE. Restart terminals that were already open."
+    ;;
+esac
+
 register_with() {
   local client="$1"
   command -v "$client" >/dev/null 2>&1 || return 0
@@ -72,19 +106,19 @@ register_with() {
     say "$client: paradigm-memory already registered."
     return 0
   fi
-  say "Registering MCP with $client (user scope) ..."
-  if   "$client" mcp add --scope user paradigm-memory paradigm-memory-mcp 2>/dev/null; then :
-  elif "$client" mcp add               paradigm-memory -- paradigm-memory-mcp 2>/dev/null; then :
+  local server="$APP_DIR/packages/memory-mcp/src/server.mjs"
+  say "Registering MCP with $client ..."
+  if   "$client" mcp add --scope user paradigm-memory node "$server" 2>/dev/null; then :
+  elif "$client" mcp add paradigm-memory -- node "$server" 2>/dev/null; then :
   else
-    say "$client mcp add failed — register it manually:"
-    say "  $client mcp add --scope user paradigm-memory paradigm-memory-mcp"
+    say "$client mcp add failed - register manually with:"
+    say "  $client mcp add --scope user paradigm-memory node \"$server\""
   fi
 }
 register_with claude
 register_with codex
 register_with gemini
 
-say "Done."
-say "Try:    paradigm version"
-say "Or:     paradigm doctor   |   paradigm memory   |   paradigm dream"
-say "Then restart your MCP client (Claude Code / Codex / Gemini) and call memory_search."
+say "Installed Paradigm Memory."
+say "Memory dir: $PARADIGM_MEMORY_DIR"
+say "Try: paradigm version"

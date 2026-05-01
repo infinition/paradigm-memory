@@ -1,7 +1,7 @@
 [package]
 name = "paradigm-memory"
-version = "0.1.0"
-description = "Desktop inspector for paradigm-memory."
+version = "0.1.1"
+description = "Local-first cognitive memory visualizer."
 authors = ["Fabien POLLY"]
 license = "Apache-2.0"
 edition = "2021"

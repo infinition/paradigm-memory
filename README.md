@@ -26,9 +26,10 @@ curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scr
 The installer:
 
 1. Checks for Node 22+ (refuses politely otherwise).
-2. Installs `@paradigm-memory/memory-cli` globally (from npm if published, otherwise from this repo).
-3. Bootstraps `~/.paradigm` (creates the dir; the first `paradigm` call seeds the schema).
-4. Best-effort registers the MCP with `claude`, `codex`, and `gemini` CLIs that are already on your PATH.
+2. Downloads the matching CLI/MCP bundle from GitHub Releases.
+3. Installs it under `~/.paradigm/app/current` and creates shims in `~/.paradigm/bin`.
+4. Bootstraps `~/.paradigm` (creates the dir; the first `paradigm` call seeds the schema).
+5. Best-effort registers the MCP with `claude`, `codex`, and `gemini` CLIs that are already on your PATH.
 
 Then:
 
@@ -42,8 +43,8 @@ paradigm version
 # Custom memory dir
 PARADIGM_MEMORY_DIR=/path/to/.paradigm bash <(curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh)
 
-# Pin a specific version
-PARADIGM_VERSION=0.1.0  bash <(curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh)
+# Pin a specific GitHub Release
+PARADIGM_VERSION=0.1.1 bash <(curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh)
 ```
 
 ```powershell
@@ -78,10 +79,10 @@ Paste [docs/INSTALL_PROMPT.md](docs/INSTALL_PROMPT.md) into Claude Code, Codex, 
 ## CLI
 
 ```bash
-paradigm                 # launch Paradigm Memory from a source checkout
+paradigm                 # print help
 paradigm memory          # same (alias)
 paradigm version         # print version + active memory dir
-paradigm update          # update packages / reinstall deps, never touches memory
+paradigm update          # show update instructions, never touches memory
 paradigm export          # prompt for .brain export path
 paradigm export backup.brain
 paradigm import          # prompt for .brain import path
@@ -105,8 +106,8 @@ paradigm uninstall       # unregister MCP clients, keep ~/.paradigm
 | Tool | Purpose | Mutates |
 |---|---|---|
 | `memory_version` | version, protocol, active data dir, workspace stats | no |
-| `memory_update_check` | read-only npm version check | no |
-| `memory_self_update` | gated npm update of fixed Paradigm packages, disabled by default | no unless enabled |
+| `memory_update_check` | read-only GitHub Release version check | no |
+| `memory_self_update` | gated rerun of the official GitHub Release installer, disabled by default | no unless enabled |
 | `memory_search` | cognitive-map activation + hybrid retrieval + context pack | no |
 | `memory_doctor` | read-only health check with repair hints | no |
 | `memory_doctor_fix` | safe self-healing: rebuild FTS, refresh JSON mirrors, optionally warm embeddings | write |
@@ -143,8 +144,8 @@ Destructive operations are guarded: `memory_delete` and `memory_import` with
 Release helpers:
 
 ```bash
-npm run release:check       # validate package versions and manifest consistency
-npm run release:manifests   # after npm publish, fill Homebrew/Scoop SHA-256
+npm run release:check       # validate versions, tag, Tauri config and release workflow
+npm run release:cli         # build a local CLI/MCP release tree for this OS
 ```
 
 ## Client setup
@@ -241,7 +242,7 @@ paradigm          # preferred
 npm run app:dev
 ```
 
-Studio is a human inspector: map, graph, search, review queue, audit timeline, export/import, dream. It is not a chat UI.
+Paradigm Memory is a human inspector: map, graph, search, review queue, audit timeline, export/import and dream. It is not a chat UI.
 
 ## Requirements
 

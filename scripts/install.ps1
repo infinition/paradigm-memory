@@ -32,7 +32,7 @@ if ($nodeMajor -lt 22) {
 $npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
 if (-not $npmCommand) { $npmCommand = Get-Command npm -ErrorAction SilentlyContinue }
 if (-not $npmCommand) {
-    Write-Info "npm not found on PATH. It ships with Node 22+."
+    Write-Info "npm not found on PATH. It ships with Node 22+ and is needed for source-checkout development."
     exit 1
 }
 $NpmCmd = $npmCommand.Source
@@ -41,13 +41,23 @@ Write-Info "Installing dependencies in $rootDir ..."
 Push-Location $rootDir
 try {
     & $NpmCmd install --no-fund --no-audit
-    $corePackage = Join-Path $rootDir "packages\memory-core"
-    $mcpPackage = Join-Path $rootDir "packages\memory-mcp"
-    $cliPackage = Join-Path $rootDir "packages\memory-cli"
-    & $NpmCmd install -g $corePackage $mcpPackage $cliPackage --no-fund --no-audit
 }
 finally {
     Pop-Location
+}
+
+$paradigmHome = Split-Path -Parent $env:PARADIGM_MEMORY_DIR
+if ((Split-Path -Leaf $env:PARADIGM_MEMORY_DIR) -ne ".paradigm") {
+    $paradigmHome = Join-Path $env:USERPROFILE ".paradigm"
+}
+$binDir = Join-Path $paradigmHome "bin"
+New-Item -ItemType Directory -Force -Path $binDir | Out-Null
+Set-Content -Path (Join-Path $binDir "paradigm.cmd") -Encoding ASCII -Value "@echo off`r`nset `"PARADIGM_MEMORY_DIR=$($env:PARADIGM_MEMORY_DIR)`"`r`nnode `"$rootDir\packages\memory-cli\src\cli.mjs`" %*`r`n"
+Set-Content -Path (Join-Path $binDir "paradigm-memory-mcp.cmd") -Encoding ASCII -Value "@echo off`r`nset `"PARADIGM_MEMORY_DIR=$($env:PARADIGM_MEMORY_DIR)`"`r`nnode `"$rootDir\packages\memory-mcp\src\server.mjs`" %*`r`n"
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if (-not (($userPath -split ';') -contains $binDir)) {
+    [Environment]::SetEnvironmentVariable("Path", (($userPath, $binDir) -ne "" -join ";"), "User")
+    $env:Path = "$env:Path;$binDir"
 }
 
 $treePath = Join-Path $env:PARADIGM_MEMORY_DIR "memory\tree.json"
@@ -72,5 +82,5 @@ else {
     Write-Host "claude mcp add --scope user paradigm-memory node `"$mcpServer`""
 }
 
-Write-Info "CLI installed: paradigm"
+Write-Info "CLI shim installed: $(Join-Path $binDir "paradigm.cmd")"
 Write-Info "Done. Restart your MCP client and ask it to use memory_search."

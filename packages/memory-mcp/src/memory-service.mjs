@@ -405,6 +405,16 @@ export async function createMemoryService({
     return atlas;
   }
 
+  async function refreshAtlas(atlas) {
+    if (typeof atlas.hydrateFromStore === "function") {
+      await refreshAtlas(atlas);
+      return;
+    }
+    if (typeof atlas.reload === "function") {
+      await atlas.reload();
+    }
+  }
+
   function findNode(atlas, id) {
     return atlas.tree.nodes.find((node) => node.id === id) ?? null;
   }
@@ -491,10 +501,12 @@ export async function createMemoryService({
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), args.timeout_ms ?? 1200);
       try {
-        const encoded = encodeURIComponent(packageMeta.name);
-        const response = await fetch(`https://registry.npmjs.org/${encoded}/latest`, {
+        const response = await fetch("https://api.github.com/repos/infinition/paradigm-memory/releases/latest", {
           signal: controller.signal,
-          headers: { "accept": "application/json" }
+          headers: {
+            "accept": "application/vnd.github+json",
+            "user-agent": "paradigm-memory"
+          }
         });
         if (!response.ok) {
           return {
@@ -504,11 +516,11 @@ export async function createMemoryService({
             latest: null,
             update_available: false,
             checked_at: nowIso(),
-            error: `npm_registry_${response.status}`
+            error: `github_release_${response.status}`
           };
         }
         const payload = await response.json();
-        const latest = payload.version ?? null;
+        const latest = String(payload.tag_name ?? "").replace(/^v/, "") || null;
         return {
           enabled: true,
           package_name: packageMeta.name,
@@ -535,8 +547,10 @@ export async function createMemoryService({
     async selfUpdate(input) {
       const args = selfUpdateSchema.parse(input ?? {});
       const enabled = process.env.PARADIGM_ALLOW_SELF_UPDATE === "1";
-      const command = process.platform === "win32" ? "npm.cmd" : "npm";
-      const packages = ["@paradigm-memory/memory-core", "@paradigm-memory/memory-mcp", "@paradigm-memory/memory-cli"];
+      const command = process.platform === "win32" ? "powershell" : "sh";
+      const updateArgs = process.platform === "win32"
+        ? ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "irm https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex"]
+        : ["-c", "curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash"];
       if (!enabled) {
         return {
           enabled: false,
@@ -544,7 +558,7 @@ export async function createMemoryService({
           reason: "disabled_by_default",
           required_env: "PARADIGM_ALLOW_SELF_UPDATE=1",
           command,
-          args: ["update", "-g", ...packages]
+          args: updateArgs
         };
       }
       if (args.dry_run) {
@@ -553,16 +567,16 @@ export async function createMemoryService({
           ok: true,
           dry_run: true,
           command,
-          args: ["update", "-g", ...packages]
+          args: updateArgs
         };
       }
-      const result = await runProcess(command, ["update", "-g", ...packages]);
+      const result = await runProcess(command, updateArgs);
       return {
         enabled: true,
         ok: result.ok,
         code: result.code,
         command,
-        args: ["update", "-g", ...packages],
+        args: updateArgs,
         stdout: result.stdout.slice(-8000),
         stderr: result.stderr.slice(-8000)
       };
@@ -571,7 +585,7 @@ export async function createMemoryService({
     async search(input) {
       const args = searchSchema.parse(input);
       const atlas = await getAtlas(args.workspace);
-      await atlas.hydrateFromStore();
+      await refreshAtlas(atlas);
       const started = performance.now();
       const pack = await atlas.buildContextPackAsync(args.query, {
         maxTokens: 1200,
@@ -757,7 +771,7 @@ export async function createMemoryService({
     async mutations(input) {
       const args = mutationsSchema.parse(input ?? {});
       const atlas = await getAtlas(args.workspace);
-      await atlas.hydrateFromStore();
+      await refreshAtlas(atlas);
       const limit = args.limit ?? 200;
       const mutations = atlas.listMutations(limit);
       return {
@@ -814,7 +828,7 @@ export async function createMemoryService({
     async read(input) {
       const args = readSchema.parse(input);
       const atlas = await getAtlas(args.workspace);
-      await atlas.hydrateFromStore();
+      await refreshAtlas(atlas);
       const node = findNode(atlas, args.node_id);
       if (!node) {
         const error = new Error(`Unknown memory node: ${args.node_id}`);
@@ -849,7 +863,7 @@ export async function createMemoryService({
     async tree(input) {
       const args = treeSchema.parse(input ?? {});
       const atlas = await getAtlas(args.workspace);
-      await atlas.hydrateFromStore();
+      await refreshAtlas(atlas);
       const includeItems = args.include_items ?? false;
       const statuses = args.include_proposed ? ["active", "proposed"] : ["active"];
       const items = includeItems
@@ -1040,7 +1054,7 @@ export async function createMemoryService({
         error.code = "unknown_item";
         throw error;
       }
-      await atlas.hydrateFromStore();
+      await refreshAtlas(atlas);
       return { success: true };
     },
 
@@ -1057,7 +1071,7 @@ export async function createMemoryService({
         ...existing,
         ...args
       }, { actor: "mcp", reason: "update_via_studio" });
-      await atlas.hydrateFromStore();
+      await refreshAtlas(atlas);
       return updated;
     },
 

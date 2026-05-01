@@ -1,8 +1,8 @@
 # Architectural Decisions
 
-## ADR-0001 - Web Studio as Primary Surface
+## ADR-0001 - Paradigm Memory as Primary Surface
 **Date:** 2026-04-24
-**Decision:** Paradigm exposes the memory substrate through a local web application (Paradigm Studio).
+**Decision:** Paradigm exposes the memory substrate through the local Paradigm Memory application.
 **Rationale:** The interface makes the memory observable. Without a visible surface, we risk developing internal mechanics that are impossible to inspect, compare, or audit.
 **Consequences:**
 - Internal state must be serializable.
@@ -19,7 +19,7 @@
 
 ## ADR-0003 - Abstract Visual Identity
 **Date:** 2026-04-24
-**Decision:** The entity has a visual presence (Paradigm Studio) but does not immediately adopt a humanoid form.
+**Decision:** The entity has a visual presence (Paradigm Memory) but does not immediately adopt a humanoid form.
 **Rationale:** A humanoid form prematurely encourages users to project human-like interiority that hasn't been demonstrated.
 **Consequences:**
 - The UI feels like a "living cockpit" rather than a mascot.

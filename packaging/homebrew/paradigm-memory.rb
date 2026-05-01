@@ -1,15 +1,26 @@
 class ParadigmMemory < Formula
   desc "Local-first navigable memory MCP for coding agents"
   homepage "https://github.com/infinition/paradigm-memory"
-  url "https://registry.npmjs.org/@paradigm-memory/memory-cli/-/memory-cli-0.1.0.tgz"
-  sha256 "0cca6b71ebce1a6faab39b7c489b930dd0b6ef6279bf326376dfcbcf018371e4"
   license "Apache-2.0"
 
   depends_on "node@22"
 
+  on_macos do
+    on_arm do
+      url "https://github.com/infinition/paradigm-memory/releases/download/v0.1.1/paradigm-memory-cli-v0.1.1-macos-arm64.tar.gz"
+      sha256 "REPLACE_WITH_GITHUB_RELEASE_SHA256"
+    end
+    on_intel do
+      url "https://github.com/infinition/paradigm-memory/releases/download/v0.1.1/paradigm-memory-cli-v0.1.1-macos-x64.tar.gz"
+      sha256 "REPLACE_WITH_GITHUB_RELEASE_SHA256"
+    end
+  end
+
   def install
-    system "npm", "install", *std_npm_install_args(libexec)
-    bin.install_symlink Dir["#{libexec}/bin/*"]
+    libexec.install Dir["*"]
+    bin.install_symlink libexec/"bin/paradigm"
+    bin.install_symlink libexec/"bin/paradigm-memory-mcp"
+    bin.install_symlink libexec/"bin/paradigm-memory-http"
   end
 
   test do
