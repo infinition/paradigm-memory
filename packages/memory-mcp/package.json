@@ -1,6 +1,6 @@
 {
   "name": "@paradigm-memory/memory-mcp",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Local-first, audited memory MCP server for coding agents (Claude Code, Cursor, Cline, OpenCode, Continue). Cognitive-map retrieval, propose/review flow, dream consolidation.",
   "type": "module",
   "license": "Apache-2.0",
@@ -50,7 +50,7 @@
     "start": "node src/server.mjs"
   },
   "dependencies": {
-    "@paradigm-memory/memory-core": "0.1.2",
+    "@paradigm-memory/memory-core": "0.1.3",
     "zod": "^4.3.6"
   },
   "engines": {

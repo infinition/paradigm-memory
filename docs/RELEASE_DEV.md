@@ -30,12 +30,12 @@ published.
 CLI assets are named like:
 
 ```text
-paradigm-memory-cli-v0.1.2-windows-x64.tar.gz
-paradigm-memory-cli-v0.1.2-linux-x64.tar.gz
-paradigm-memory-cli-v0.1.2-macos-arm64.tar.gz
-paradigm-memory-desktop-v0.1.2-windows-x64.zip
-paradigm-memory-desktop-v0.1.2-linux-x64.AppImage
-paradigm-memory-desktop-v0.1.2-macos-arm64.zip
+paradigm-memory-cli-v0.1.3-windows-x64.tar.gz
+paradigm-memory-cli-v0.1.3-linux-x64.tar.gz
+paradigm-memory-cli-v0.1.3-macos-arm64.tar.gz
+paradigm-memory-desktop-v0.1.3-windows-x64.zip
+paradigm-memory-desktop-v0.1.3-linux-x64.AppImage
+paradigm-memory-desktop-v0.1.3-macos-arm64.zip
 ```
 
 The one-line installers download those CLI/MCP assets from GitHub Releases and
@@ -47,7 +47,7 @@ asset is present, they also install it under `~/.paradigm/desktop/current`.
 Use one version everywhere:
 
 ```bash
-npm version 0.1.2 --workspaces --include-workspace-root --no-git-tag-version
+npm version 0.1.3 --workspaces --include-workspace-root --no-git-tag-version
 npm install --package-lock-only
 ```
 
@@ -96,19 +96,19 @@ Commit the version bump and release changes first:
 ```bash
 git status
 git add .
-git commit -m "Release v0.1.2"
+git commit -m "Release v0.1.3"
 git push
 ```
 
 Create and push the tag:
 
 ```bash
-git tag v0.1.2
-git push origin v0.1.2
+git tag v0.1.3
+git push origin v0.1.3
 ```
 
-The tag must match `package.json` exactly. If the version is `0.1.2`, the tag
-must be `v0.1.2`.
+The tag must match `package.json` exactly. If the version is `0.1.3`, the tag
+must be `v0.1.3`.
 
 ## Installer Behavior
 

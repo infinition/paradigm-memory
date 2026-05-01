@@ -7,7 +7,7 @@ class ParadigmMemory < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/infinition/paradigm-memory/releases/download/v0.1.2/paradigm-memory-cli-v0.1.2-macos-arm64.tar.gz"
+      url "https://github.com/infinition/paradigm-memory/releases/download/v0.1.3/paradigm-memory-cli-v0.1.3-macos-arm64.tar.gz"
       sha256 "REPLACE_WITH_GITHUB_RELEASE_SHA256"
     end
   end

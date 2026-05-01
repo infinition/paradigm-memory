@@ -57,7 +57,7 @@ Prefer manual installers? Download the latest Windows `.exe` / `.msi`, macOS `.d
 PARADIGM_MEMORY_DIR=/path/to/.paradigm bash <(curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh)
 
 # Pin a specific GitHub Release
-PARADIGM_VERSION=0.1.2 bash <(curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh)
+PARADIGM_VERSION=0.1.3 bash <(curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh)
 ```
 
 ```powershell

@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.3] - 2026-05-01
+
+### Fixed
+
+- Fixed release publishing so nested desktop artifacts are flattened before upload to GitHub Releases.
+
 ## [0.1.2] - 2026-05-01
 
 ### Changed
