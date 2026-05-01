@@ -5,9 +5,14 @@
   "license": "Apache-2.0",
   "depends": "nodejs22",
   "url": "https://registry.npmjs.org/@paradigm-memory/memory-cli/-/memory-cli-0.1.0.tgz",
-  "hash": "REPLACE_WITH_NPM_TARBALL_SHA256",
+  "hash": "0cca6b71ebce1a6faab39b7c489b930dd0b6ef6279bf326376dfcbcf018371e4",
   "extract_dir": "package",
-  "bin": [["src/cli.mjs", "paradigm"]],
+  "bin": [
+    [
+      "src/cli.mjs",
+      "paradigm"
+    ]
+  ],
   "post_install": [
     "Write-Host 'Run: paradigm version'",
     "Write-Host 'Register MCP manually with Claude/Codex/Gemini using docs/MCP_CLIENTS.md from the repo.'"
