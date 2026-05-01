@@ -117,7 +117,10 @@ jobs:
               rm -rf "$desktop_tmp"
               mkdir -p "$desktop_tmp"
               cp "./packages/memory/src-tauri/target/release/paradigm-memory.exe" "$desktop_tmp/"
-              cp "./packages/memory/src-tauri/target/release/WebView2Loader.dll" "$desktop_tmp/"
+              webview2="$(find packages/memory/src-tauri/target/release -name WebView2Loader.dll -print -quit)"
+              if [ -n "$webview2" ]; then
+                cp "$webview2" "$desktop_tmp/"
+              fi
               (cd "$desktop_tmp" && 7z a "../${name}.zip" .)
               ;;
             macos)
