@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { open as openShell } from "@tauri-apps/plugin-shell";
+import { mcp } from "../lib/mcp";
 import { toast } from "./Toast";
 import type { VersionResult, UpdateCheckResult } from "../lib/types";
 
@@ -14,7 +17,11 @@ interface Props {
   onRefresh: () => void;
   onDoctorFix: (warm?: boolean) => void;
   onReviewSnapshot: () => void;
+  onUpdateChecked?: (result: UpdateCheckResult) => void;
 }
+
+const REPO_URL = "https://github.com/infinition/paradigm-memory";
+const RELEASES_URL = `${REPO_URL}/releases/latest`;
 
 export function Settings({
   version,
@@ -28,10 +35,45 @@ export function Settings({
   onImport,
   onRefresh,
   onDoctorFix,
-  onReviewSnapshot
+  onReviewSnapshot,
+  onUpdateChecked
 }: Props) {
+  const [checking, setChecking] = useState(false);
+  const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
+
   const copyCmd = (text: string) => {
     navigator.clipboard.writeText(text).then(() => toast.success("Copied!", text.slice(0, 60)));
+  };
+
+  const checkForUpdates = async () => {
+    setChecking(true);
+    try {
+      const result = await mcp.updateCheck(workspace);
+      setLastCheckedAt(new Date().toLocaleTimeString());
+      onUpdateChecked?.(result);
+      if (result.update_available) {
+        toast.success("Update available", `${result.current} → ${result.latest}`);
+      } else if (result.error) {
+        toast.error("Update check failed", String(result.error));
+      } else {
+        toast.info("Up to date", `You are on ${result.current}.`);
+      }
+    } catch (err: any) {
+      toast.error("Update check failed", String(err?.message ?? err));
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const openReleases = async () => {
+    try {
+      await openShell(RELEASES_URL);
+    } catch (err: any) {
+      // Fallback: copy the URL to clipboard if shell:open is denied.
+      navigator.clipboard.writeText(RELEASES_URL).then(() =>
+        toast.info("URL copied", RELEASES_URL)
+      );
+    }
   };
 
   const mcpPath = version?.data_dir
@@ -63,12 +105,56 @@ export function Settings({
           <span className="label">Storage</span>
           <span className="value">{version?.storage ?? "…"}</span>
         </div>
-        {update?.update_available && (
+      </div>
+
+      <div className="settings-section">
+        <h3>Updates</h3>
+        <div className="settings-row">
+          <span className="label">Installed version</span>
+          <span className="value">{version?.version ?? "…"}</span>
+        </div>
+        <div className="settings-row">
+          <span className="label">Latest on GitHub</span>
+          <span className="value">
+            {update?.latest ?? (update?.error ? `error: ${update.error}` : "not checked")}
+            {update?.update_available && <span style={{ color: "var(--amber)", marginLeft: 8 }}>(update available)</span>}
+            {update && !update.update_available && update.latest && <span style={{ color: "var(--teal)", marginLeft: 8 }}>(up to date)</span>}
+          </span>
+        </div>
+        {lastCheckedAt && (
           <div className="settings-row">
-            <span className="label">Update Available</span>
-            <span className="value" style={{ color: "var(--amber)" }}>
-              {update.current} → {update.latest}
-            </span>
+            <span className="label">Last checked</span>
+            <span className="value" style={{ color: "var(--muted)" }}>{lastCheckedAt}</span>
+          </div>
+        )}
+        <div className="settings-actions">
+          <button className="primary" onClick={checkForUpdates} disabled={checking}>
+            {checking ? "Checking…" : "Check for updates"}
+          </button>
+          <button className="ghost" onClick={openReleases}>Open releases page</button>
+        </div>
+        {update?.update_available && (
+          <div style={{ marginTop: 12, padding: 12, border: "1px solid var(--amber)", borderRadius: "var(--radius)", background: "rgba(245, 158, 11, 0.06)" }}>
+            <div style={{ fontWeight: 700, color: "var(--amber)", marginBottom: 4 }}>
+              Update {update.latest} is available.
+            </div>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 8 }}>
+              Re-run the one-line installer to upgrade. Your memory data is never touched.
+            </div>
+            <div className="cmd-block" onClick={() =>
+              copyCmd(`irm https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex`)
+            }>
+              <span className="copy-hint">click to copy</span>
+              <strong style={{ color: "var(--teal)" }}>Windows (PowerShell)</strong><br />
+              irm https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex
+            </div>
+            <div className="cmd-block" style={{ marginTop: 8 }} onClick={() =>
+              copyCmd(`curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash`)
+            }>
+              <span className="copy-hint">click to copy</span>
+              <strong style={{ color: "var(--teal)" }}>macOS / Linux</strong><br />
+              curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash
+            </div>
           </div>
         )}
       </div>

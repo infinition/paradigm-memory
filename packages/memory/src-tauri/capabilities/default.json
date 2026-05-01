@@ -1,0 +1,52 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default permissions for the Paradigm Memory desktop app. Enables the dialog plugin (so users can pick .brain export/import paths), the fs plugin (so workspace folders can be created/deleted under the memory dir), and the shell plugin (so 'check for updates' can open the GitHub Releases page in the user's browser).",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+
+    "dialog:default",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-message",
+    "dialog:allow-confirm",
+    "dialog:allow-ask",
+
+    "fs:default",
+    "fs:allow-mkdir",
+    "fs:allow-remove",
+    "fs:allow-read-dir",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:allow-exists",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "$HOME/.paradigm/**" },
+        { "path": "$HOME/**" },
+        { "path": "$APPDATA/**" },
+        { "path": "$LOCALDATA/**" },
+        { "path": "$TEMP/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$DOCUMENT/**" },
+        { "path": "$DOWNLOAD/**" }
+      ]
+    },
+
+    "core:webview:allow-internal-toggle-devtools",
+    "core:window:default",
+    "core:window:allow-set-title",
+    "core:event:default",
+
+    "shell:default",
+    {
+      "identifier": "shell:allow-open",
+      "allow": [
+        { "url": "https://github.com/infinition/paradigm-memory/**" },
+        { "url": "https://api.github.com/**" },
+        { "url": "https://nodejs.org/**" }
+      ]
+    }
+  ]
+}

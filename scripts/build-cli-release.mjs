@@ -36,15 +36,20 @@ const workspacePackages = [
   "packages/memory-cli"
 ];
 
-async function copyIfExists(from, to) {
+// Copy a tree. `excludeNodeModules` is opt-in: we use it for the workspace
+// package copies (we don't want their nested node_modules) but NOT for the
+// root node_modules copy itself — otherwise the filter would reject every
+// file inside it (every path contains "/node_modules/" by construction)
+// and we'd ship an empty node_modules to users. That is the bug fixed here.
+async function copyIfExists(from, to, { excludeNodeModules = false } = {}) {
   try {
     await cp(from, to, {
       recursive: true,
       dereference: true,
       filter(source) {
         const normalized = source.replaceAll("\\", "/");
-        return !normalized.includes("/node_modules/")
-          && !normalized.includes("/dist/")
+        if (excludeNodeModules && normalized.includes("/node_modules/")) return false;
+        return !normalized.includes("/dist/")
           && !normalized.includes("/target/")
           && !normalized.includes("/.git/");
       }
@@ -59,11 +64,16 @@ await mkdir(outDir, { recursive: true });
 await mkdir(path.join(outDir, "packages"), { recursive: true });
 await mkdir(path.join(outDir, "bin"), { recursive: true });
 
+// Root node_modules: ship as-is (workflow runs `npm prune --omit=dev` first
+// so we only ship runtime deps).
 await copyIfExists(path.join(root, "node_modules"), path.join(outDir, "node_modules"));
 await rm(path.join(outDir, "node_modules", ".cache"), { recursive: true, force: true });
 
+// Workspace packages: skip their own nested node_modules (npm workspaces
+// keep deps hoisted at the root, but a stray nested copy would balloon
+// the tarball).
 for (const workspace of workspacePackages) {
-  await copyIfExists(path.join(root, workspace), path.join(outDir, workspace));
+  await copyIfExists(path.join(root, workspace), path.join(outDir, workspace), { excludeNodeModules: true });
 }
 
 for (const file of ["README.md", "LICENSE", "NOTICE"]) {

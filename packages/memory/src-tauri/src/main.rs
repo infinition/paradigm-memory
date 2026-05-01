@@ -344,6 +344,7 @@ pub fn run() {
     if let Err(err) = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_shell::init())
         .manage(mcp)
         .invoke_handler(tauri::generate_handler![mcp_call, mcp_status, read_mutations])
         .run(tauri::generate_context!())

@@ -83,7 +83,17 @@ export function AuditLog({ workspace, onSelectNode, onSelectItem }: Props) {
   return (
     <div className="audit-list">
       <div className="audit-toolbar">
-        <input value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Filter operation, actor, item..." />
+        <span className="input-with-clear" style={{ flex: 1 }}>
+          <input
+            value={filter}
+            onChange={(event) => setFilter(event.target.value)}
+            onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); setFilter(""); (e.target as HTMLInputElement).blur(); } }}
+            placeholder="Filter operation, actor, item..."
+          />
+          {filter && (
+            <button type="button" className="clear-btn" onClick={() => setFilter("")} title="Clear (Esc)" tabIndex={-1}>×</button>
+          )}
+        </span>
         <button className={`ghost small${auto ? " active" : ""}`} onClick={() => setAuto(!auto)}>Auto</button>
         <button className="ghost small" onClick={load}>Refresh</button>
       </div>

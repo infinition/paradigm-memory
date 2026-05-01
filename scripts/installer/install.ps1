@@ -112,12 +112,31 @@ Set-Content -Path $httpPs1 -Encoding ASCII -Value @"
 exit `$LASTEXITCODE
 "@
 
+# PATH update — careful with array vs string semantics. `$BinDir + $array`
+# does string-concatenation when $BinDir is a scalar, which previously fused
+# `bin` with the next entry (no `;` between them). Wrap in @(...) to force
+# array semantics. We also self-heal: any entry that *contains* $BinDir as a
+# prefix without being equal to it is the corrupted artefact of the old bug
+# and gets normalised away.
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-$pathParts = @($userPath -split ';' | Where-Object { $_ -and $_ -ne $BinDir })
-$newUserPath = (($BinDir) + $pathParts) -join ";"
+$rawParts = @($userPath -split ';')
+$cleanedParts = @()
+foreach ($part in $rawParts) {
+    if (-not $part) { continue }
+    if ($part -eq $BinDir) { continue }
+    if ($part.StartsWith($BinDir, [System.StringComparison]::OrdinalIgnoreCase) -and $part -ne $BinDir) {
+        # Recover the trailing path that got fused after `bin` (e.g. "binC:\foo" → "C:\foo").
+        $tail = $part.Substring($BinDir.Length)
+        if ($tail -and (Test-Path -IsValid $tail)) { $cleanedParts += $tail }
+        continue
+    }
+    $cleanedParts += $part
+}
+$newUserPath = (@($BinDir) + $cleanedParts) -join ";"
 if ($newUserPath -ne $userPath) {
     [Environment]::SetEnvironmentVariable("Path", $newUserPath, "User")
-    $env:Path = (($BinDir) + @($env:Path -split ';' | Where-Object { $_ -and $_ -ne $BinDir })) -join ";"
+    $sessionParts = @($env:Path -split ';' | Where-Object { $_ -and $_ -ne $BinDir })
+    $env:Path = (@($BinDir) + $sessionParts) -join ";"
     Say "Added $BinDir first in your user PATH. Restart terminals that were already open."
 }
 

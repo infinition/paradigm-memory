@@ -44,15 +44,41 @@ export function SearchBar({ workspace, onResult, onQueryChange }: Props) {
     run(query);
   };
 
+  const clear = () => {
+    setQuery("");
+    onResult(null);
+    onQueryChange?.("");
+    setMeta(null);
+    if (debounce.current) {
+      window.clearTimeout(debounce.current);
+      debounce.current = null;
+    }
+  };
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      clear();
+      (event.target as HTMLInputElement).blur();
+    }
+  };
+
   return (
     <form onSubmit={onSubmit} style={{ display: "flex", gap: 8, alignItems: "center", flex: 1 }}>
-      <input
-        className="search-input"
-        placeholder={'Search memory... (FTS5 boolean ops supported: AND, OR, NOT, +, -, "phrase")'}
-        value={query}
-        onChange={(event) => onChange(event.target.value)}
-        autoFocus
-      />
+      <span className="input-with-clear" style={{ flex: 1 }}>
+        <input
+          className="search-input"
+          placeholder={'Search memory... (FTS5 boolean ops supported: AND, OR, NOT, +, -, "phrase")'}
+          value={query}
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={onKeyDown}
+          autoFocus
+        />
+        {query && (
+          <button type="button" className="clear-btn" onClick={clear} title="Clear (Esc)" tabIndex={-1}>×</button>
+        )}
+      </span>
       {busy && <span style={{ color: "var(--muted)", fontSize: 11 }}>…</span>}
       {meta && !busy && (
         <span style={{ color: "var(--muted)", fontSize: 11, fontVariantNumeric: "tabular-nums" }}>

@@ -454,8 +454,16 @@ export default function App() {
           <button className={`tab${tab === "dream" ? " active" : ""}`} onClick={() => setTab("dream")}>
             Dream {dreamCount !== null && dreamCount > 0 && <span className="update-badge" style={{ marginLeft: 6 }}>{dreamCount}</span>}
           </button>
-          <button className={`tab${tab === "health" ? " active" : ""}`} onClick={() => setTab("health")}>
-            Health {doctor && <span className="update-badge" style={{ marginLeft: 6 }}>{doctor.score}</span>}
+          <button
+            className={`tab${tab === "health" ? " active" : ""}`}
+            onClick={() => setTab("health")}
+            title={doctor ? `Memory health score ${doctor.score}/100 — ${doctor.checks.filter(c => !c.ok).length} check(s) need attention` : undefined}
+          >
+            Health {doctor && !doctor.ok && (
+              <span className="update-badge" style={{ marginLeft: 6 }}>
+                {doctor.checks.filter(c => !c.ok).length}
+              </span>
+            )}
           </button>
           <button className={`tab${tab === "settings" ? " active" : ""}`} onClick={() => setTab("settings")}>Settings</button>
         </div>
@@ -619,9 +627,18 @@ export default function App() {
               {!doctor && <div className="empty">Health report unavailable.</div>}
               {doctor && (
                 <div className="health-panel">
-                  <div className={`health-score ${doctor.ok ? "ok" : "warn"}`}>
-                    <strong>{doctor.score}</strong>
-                    <span>{doctor.ok ? "Healthy" : "Needs attention"}</span>
+                  <div className={`health-score ${doctor.ok ? "ok" : "warn"}`} title="Health score is a 0-100 rating computed from the checks below. 100 = every check passed.">
+                    <strong>{doctor.score}<small style={{ fontSize: 14, color: "var(--muted)", fontWeight: 500 }}>/100</small></strong>
+                    <span>
+                      {doctor.ok
+                        ? "Healthy — all checks passed"
+                        : `${doctor.checks.filter(c => !c.ok).length} of ${doctor.checks.length} check(s) need attention`}
+                    </span>
+                    {(version?.stats?.itemCount ?? 0) === 0 && (
+                      <span style={{ display: "block", marginTop: 6, fontSize: 12, color: "var(--muted)" }}>
+                        Memory is empty. Use the Map tab → "+ Create node" to start, or import a <code>.brain</code> snapshot from the toolbar.
+                      </span>
+                    )}
                   </div>
                   <div className="health-actions">
                     <button className="primary" onClick={() => runDoctorFix(false)}>Run safe fixes</button>
@@ -711,6 +728,7 @@ export default function App() {
                 onRefresh={refresh}
                 onDoctorFix={runDoctorFix}
                 onReviewSnapshot={reviewSnapshot}
+                onUpdateChecked={setUpdate}
               />
             </div>
           </div>

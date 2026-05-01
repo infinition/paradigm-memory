@@ -138,11 +138,17 @@ export function Sidebar({ nodes, selectedId, onSelect, itemCounts, activatedIds,
     <div className="pane">
       <h2>Cognitive Map</h2>
       <div className="sidebar-actions">
-        <input
-          placeholder="Filter nodes..."
-          value={searchFilter}
-          onChange={e => onSearchFilterChange(e.target.value)}
-        />
+        <span className="input-with-clear">
+          <input
+            placeholder="Filter nodes..."
+            value={searchFilter}
+            onChange={e => onSearchFilterChange(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); onSearchFilterChange(""); (e.target as HTMLInputElement).blur(); } }}
+          />
+          {searchFilter && (
+            <button type="button" className="clear-btn" onClick={() => onSearchFilterChange("")} title="Clear (Esc)" tabIndex={-1}>×</button>
+          )}
+        </span>
         {onCreateNode && (
           <button className="ghost small" onClick={onCreateNode} title="Create node">+</button>
         )}
