@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -69,9 +69,9 @@
             <div class="relative grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
                 <div class="lg:col-span-5 space-y-7">
                     <div>
-                        <h2 class="text-3xl md:text-4xl font-bold text-white mb-3">Download</h2>
+                        <h2 class="text-3xl md:text-4xl font-bold text-white mb-3">Install</h2>
                         <p class="text-gray-400 leading-relaxed">
-                            Choose your system. The installer puts the CLI/MCP bundle in <span class="font-mono text-cyan-300">~/.paradigm</span> and keeps your data intact during updates.
+                            Choose your system. The one-line installer sets up the desktop app, CLI and MCP server in <span class="font-mono text-cyan-300">~/.paradigm</span> and keeps your data intact during updates.
                         </p>
                     </div>
 
@@ -110,12 +110,12 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <a id="release-link" href="https://github.com/infinition/paradigm-memory/releases/latest" class="group bg-white text-black rounded-xl px-5 py-4 font-bold hover:bg-cyan-300 transition-colors">
-                            Open latest release
-                            <span class="block text-xs font-mono text-black/60 mt-1">Installateurs et archives</span>
+                            Download desktop app
+                            <span class="block text-xs font-mono text-black/60 mt-1">EXE / MSI / DMG / AppImage / DEB</span>
                         </a>
                         <div class="bg-paradigm-card rounded-xl border border-gray-800 px-5 py-4">
                             <div class="text-white font-bold">Verify</div>
-                            <div class="font-mono text-cyan-300 text-sm mt-1">paradigm version</div>
+                            <div class="font-mono text-cyan-300 text-sm mt-1">paradigm</div>
                         </div>
                     </div>
 
@@ -123,16 +123,16 @@
                         <h3 class="text-white font-bold mb-3">What gets installed</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-gray-400">
                             <div class="border border-white/10 rounded-lg p-3">
+                                <div class="font-mono text-cyan-300 mb-1">DESKTOP</div>
+                                <div>Launch with <span class="font-mono text-white">paradigm</span></div>
+                            </div>
+                            <div class="border border-white/10 rounded-lg p-3">
                                 <div class="font-mono text-cyan-300 mb-1">CLI</div>
-                                <div>Commande <span class="font-mono text-white">paradigm</span></div>
+                                <div>Commands like <span class="font-mono text-white">paradigm version</span></div>
                             </div>
                             <div class="border border-white/10 rounded-lg p-3">
                                 <div class="font-mono text-cyan-300 mb-1">MCP</div>
                                 <div>Local server for agents</div>
-                            </div>
-                            <div class="border border-white/10 rounded-lg p-3">
-                                <div class="font-mono text-cyan-300 mb-1">DATA</div>
-                                <div>Memory in <span class="font-mono text-white">~/.paradigm</span></div>
                             </div>
                         </div>
                     </div>

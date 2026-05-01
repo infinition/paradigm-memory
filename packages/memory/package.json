@@ -1,6 +1,6 @@
 {
   "name": "@paradigm-memory/memory",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Desktop inspector for paradigm-memory. Tauri shell + React + react-flow nodal view, dogfooding paradigm-memory-mcp as a sidecar.",
   "type": "module",

@@ -14,6 +14,7 @@ REPO="${PARADIGM_REPO:-infinition/paradigm-memory}"
 PARADIGM_HOME="${PARADIGM_HOME:-$HOME/.paradigm}"
 PARADIGM_MEMORY_DIR="${PARADIGM_MEMORY_DIR:-$PARADIGM_HOME}"
 APP_DIR="$PARADIGM_HOME/app/current"
+DESKTOP_DIR="$PARADIGM_HOME/desktop/current"
 BIN_DIR="$PARADIGM_HOME/bin"
 VERSION="${PARADIGM_VERSION:-}"
 
@@ -66,18 +67,79 @@ console.log(asset.browser_download_url);
 NODE
 )" || fail "No $OS $ARCH CLI asset found in the selected release."
 
+DESKTOP_ASSET_URL=""
+if DESKTOP_ASSET_URL="$(node - "$RELEASE_JSON" "$OS" "$ARCH" <<'NODE'
+const [file, os, arch] = process.argv.slice(2);
+const release = JSON.parse(await import("node:fs/promises").then(fs => fs.readFile(file, "utf8")));
+const suffix = os === "linux" ? "AppImage" : "zip";
+const re = new RegExp(`^paradigm-memory-desktop-v.*-${os}-${arch}\\.${suffix}$`);
+const asset = release.assets?.find((candidate) => re.test(candidate.name));
+if (!asset) process.exit(2);
+console.log(asset.browser_download_url);
+NODE
+)"; then
+  :
+else
+  DESKTOP_ASSET_URL=""
+fi
+
 ARCHIVE="$TMP/paradigm-memory-cli.tar.gz"
-mkdir -p "$APP_DIR" "$BIN_DIR" "$PARADIGM_MEMORY_DIR"
+mkdir -p "$APP_DIR" "$DESKTOP_DIR" "$BIN_DIR" "$PARADIGM_MEMORY_DIR"
 say "Downloading $(basename "$ASSET_URL") ..."
 curl -fL -H "User-Agent: paradigm-memory-installer" "$ASSET_URL" -o "$ARCHIVE"
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR"
 tar -xzf "$ARCHIVE" -C "$APP_DIR"
 
+if [ -n "$DESKTOP_ASSET_URL" ]; then
+  rm -rf "$DESKTOP_DIR"
+  mkdir -p "$DESKTOP_DIR"
+  say "Downloading $(basename "$DESKTOP_ASSET_URL") ..."
+  if [ "$OS" = "linux" ]; then
+    desktop_file="$DESKTOP_DIR/$(basename "$DESKTOP_ASSET_URL")"
+    curl -fL -H "User-Agent: paradigm-memory-installer" "$DESKTOP_ASSET_URL" -o "$desktop_file"
+    chmod +x "$desktop_file"
+  else
+    desktop_archive="$TMP/paradigm-memory-desktop.zip"
+    curl -fL -H "User-Agent: paradigm-memory-installer" "$DESKTOP_ASSET_URL" -o "$desktop_archive"
+    ditto -x -k "$desktop_archive" "$DESKTOP_DIR"
+  fi
+else
+  say "No portable desktop asset found; CLI/MCP install will still work."
+fi
+
 cat > "$BIN_DIR/paradigm" <<EOF
 #!/usr/bin/env bash
 export PARADIGM_MEMORY_DIR="$PARADIGM_MEMORY_DIR"
+export PARADIGM_DESKTOP_DIR="$DESKTOP_DIR"
+launch_desktop() {
+  if [ "$OS" = "macos" ]; then
+    app="\$(find "$DESKTOP_DIR" -maxdepth 1 -name '*.app' -print -quit 2>/dev/null || true)"
+    [ -n "\$app" ] || return 1
+    open "\$app" >/dev/null 2>&1 &
+    return 0
+  fi
+  app="\$(find "$DESKTOP_DIR" -maxdepth 1 -name '*.AppImage' -print -quit 2>/dev/null || true)"
+  [ -n "\$app" ] || return 1
+  chmod +x "\$app" 2>/dev/null || true
+  "\$app" >/dev/null 2>&1 &
+  return 0
+}
+if [ "\$#" -eq 0 ]; then
+  launch_desktop && exit 0
+fi
+case "\${1:-}" in
+  app|memory|open|launch)
+    launch_desktop && exit 0
+    ;;
+esac
 exec node "$APP_DIR/packages/memory-cli/src/cli.mjs" "\$@"
+EOF
+cat > "$BIN_DIR/paradigm-memory" <<EOF
+#!/usr/bin/env bash
+export PARADIGM_MEMORY_DIR="$PARADIGM_MEMORY_DIR"
+export PARADIGM_DESKTOP_DIR="$DESKTOP_DIR"
+exec "$BIN_DIR/paradigm" app
 EOF
 cat > "$BIN_DIR/paradigm-memory-mcp" <<EOF
 #!/usr/bin/env bash
@@ -89,19 +151,19 @@ cat > "$BIN_DIR/paradigm-memory-http" <<EOF
 export PARADIGM_MEMORY_DIR="$PARADIGM_MEMORY_DIR"
 exec node "$APP_DIR/packages/memory-mcp/src/http-server.mjs" "\$@"
 EOF
-chmod +x "$BIN_DIR/paradigm" "$BIN_DIR/paradigm-memory-mcp" "$BIN_DIR/paradigm-memory-http"
+chmod +x "$BIN_DIR/paradigm" "$BIN_DIR/paradigm-memory" "$BIN_DIR/paradigm-memory-mcp" "$BIN_DIR/paradigm-memory-http"
 
-case ":$PATH:" in
-  *":$BIN_DIR:"*) ;;
-  *)
-    PROFILE="$HOME/.profile"
-    if [ -n "${ZSH_VERSION:-}" ]; then PROFILE="$HOME/.zshrc"; fi
-    if [ -n "${BASH_VERSION:-}" ]; then PROFILE="$HOME/.bashrc"; fi
-    printf '\nexport PATH="$HOME/.paradigm/bin:$PATH"\n' >> "$PROFILE"
-    export PATH="$BIN_DIR:$PATH"
-    say "Added $BIN_DIR to $PROFILE. Restart terminals that were already open."
-    ;;
-esac
+PROFILE="$HOME/.profile"
+if [ -n "${ZSH_VERSION:-}" ]; then PROFILE="$HOME/.zshrc"; fi
+if [ -n "${BASH_VERSION:-}" ]; then PROFILE="$HOME/.bashrc"; fi
+mkdir -p "$(dirname "$PROFILE")"
+touch "$PROFILE"
+if ! grep -F 'export PATH="$HOME/.paradigm/bin:$PATH"' "$PROFILE" >/dev/null 2>&1; then
+  printf '\nexport PATH="$HOME/.paradigm/bin:$PATH"\n' >> "$PROFILE"
+  say "Added $BIN_DIR to $PROFILE. Restart terminals that were already open."
+fi
+PATH_WITHOUT_BIN="$(printf '%s' "$PATH" | awk -v RS=: -v ORS=: -v bin="$BIN_DIR" '$0 != bin { print }' | sed 's/:$//')"
+export PATH="$BIN_DIR${PATH_WITHOUT_BIN:+:$PATH_WITHOUT_BIN}"
 
 register_with() {
   local client="$1"
@@ -125,4 +187,5 @@ register_with gemini
 
 say "Installed Paradigm Memory."
 say "Memory dir: $PARADIGM_MEMORY_DIR"
-say "Try: paradigm version"
+say "Try: paradigm"
+say "CLI commands still work, for example: paradigm version"

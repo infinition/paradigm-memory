@@ -3,6 +3,21 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.2] - 2026-05-01
+
+### Changed
+
+- Release workflow now publishes CLI/MCP archives and desktop assets from GitHub Releases only.
+- One-line installers now install CLI/MCP plus the portable desktop app when available.
+- `paradigm` opens Paradigm Memory, while subcommands such as `paradigm version` and `paradigm serve` remain CLI commands.
+- macOS release assets target Apple Silicon only.
+
+### Fixed
+
+- Fixed the MCP service refresh recursion that could overflow the stack in CI.
+- Hardened Windows cleanup in concurrent SQLite tests.
+- Added generated Tauri icon assets required by app builds.
+
 ## [0.1.1] — 2026-05-01
 
 ### Added — Desktop App (`@paradigm-memory/memory`)

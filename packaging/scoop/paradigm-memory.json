@@ -1,10 +1,10 @@
 {
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Local-first navigable memory MCP for coding agents.",
   "homepage": "https://github.com/infinition/paradigm-memory",
   "license": "Apache-2.0",
   "depends": "nodejs22",
-  "url": "https://github.com/infinition/paradigm-memory/releases/download/v0.1.1/paradigm-memory-cli-v0.1.1-windows-x64.tar.gz",
+  "url": "https://github.com/infinition/paradigm-memory/releases/download/v0.1.2/paradigm-memory-cli-v0.1.2-windows-x64.tar.gz",
   "hash": "REPLACE_WITH_GITHUB_RELEASE_SHA256",
   "bin": [
     [
@@ -21,7 +21,7 @@
     ]
   ],
   "post_install": [
-    "Write-Host 'Run: paradigm version'",
+    "Write-Host 'Run: paradigm'",
     "Write-Host 'Register MCP manually with Claude/Codex/Gemini using docs/MCP_CLIENTS.md from the repo.'"
   ],
   "checkver": {

@@ -67,13 +67,22 @@ jobs:
           path: dist/release/*.tar.gz
 
   app:
-    name: app (${{ matrix.platform }})
+    name: app (${{ matrix.asset_platform }}-${{ matrix.asset_arch }})
     needs: validate
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-latest, macos-26, ubuntu-22.04]
+        include:
+          - runner: windows-latest
+            asset_platform: windows
+            asset_arch: x64
+          - runner: macos-26
+            asset_platform: macos
+            asset_arch: arm64
+          - runner: ubuntu-22.04
+            asset_platform: linux
+            asset_arch: x64
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -81,7 +90,7 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-22.04'
+        if: matrix.asset_platform == 'linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
@@ -94,6 +103,48 @@ jobs:
         with:
           projectPath: packages/memory
           includeUpdaterJson: false
+      - name: Package portable desktop launcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          out="dist/release"
+          mkdir -p "$out"
+          name="paradigm-memory-desktop-v${version}-${{ matrix.asset_platform }}-${{ matrix.asset_arch }}"
+          case "${{ matrix.asset_platform }}" in
+            windows)
+              desktop_tmp="$out/${name}"
+              rm -rf "$desktop_tmp"
+              mkdir -p "$desktop_tmp"
+              cp "./packages/memory/src-tauri/target/release/paradigm-memory.exe" "$desktop_tmp/"
+              cp "./packages/memory/src-tauri/target/release/WebView2Loader.dll" "$desktop_tmp/"
+              (cd "$desktop_tmp" && 7z a "../${name}.zip" .)
+              ;;
+            macos)
+              app_path="$(find packages/memory/src-tauri/target/release/bundle/macos -maxdepth 1 -name '*.app' -print -quit)"
+              test -n "$app_path"
+              ditto -c -k --sequesterRsrc --keepParent "$app_path" "$out/${name}.zip"
+              ;;
+            linux)
+              appimage="$(find packages/memory/src-tauri/target/release/bundle -name '*.AppImage' -print -quit)"
+              test -n "$appimage"
+              cp "$appimage" "$out/${name}.AppImage"
+              chmod +x "$out/${name}.AppImage"
+              ;;
+          esac
+      - name: Upload app bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: paradigm-memory-app-${{ matrix.asset_platform }}-${{ matrix.asset_arch }}
+          if-no-files-found: error
+          path: |
+            dist/release/paradigm-memory-desktop-*
+            packages/memory/src-tauri/target/release/bundle/**/*.msi
+            packages/memory/src-tauri/target/release/bundle/**/*.exe
+            packages/memory/src-tauri/target/release/bundle/**/*.dmg
+            packages/memory/src-tauri/target/release/bundle/**/*.deb
+            packages/memory/src-tauri/target/release/bundle/**/*.rpm
+            packages/memory/src-tauri/target/release/bundle/**/*.AppImage
 
   publish:
     name: publish release
@@ -103,11 +154,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-          pattern: paradigm-memory-cli-*
+          pattern: paradigm-memory-*
           merge-multiple: true
-      - name: Upload CLI assets
+      - name: Upload release assets
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: artifacts/*.tar.gz
+          files: artifacts/*
           fail_on_unmatched_files: true

@@ -15,6 +15,10 @@ The normal release flow is:
 The `Release` workflow publishes:
 
 - Paradigm Memory desktop bundles for Windows, Linux and macOS through Tauri.
+- Portable desktop launchers used by the one-line installers:
+  - `windows-x64` zip with `paradigm-memory.exe`
+  - `linux-x64` AppImage
+  - `macos-arm64` zip with `Paradigm Memory.app`
 - CLI/MCP archives for:
   - `windows-x64`
   - `linux-x64`
@@ -26,13 +30,17 @@ published.
 CLI assets are named like:
 
 ```text
-paradigm-memory-cli-v0.1.1-windows-x64.tar.gz
-paradigm-memory-cli-v0.1.1-linux-x64.tar.gz
-paradigm-memory-cli-v0.1.1-macos-arm64.tar.gz
+paradigm-memory-cli-v0.1.2-windows-x64.tar.gz
+paradigm-memory-cli-v0.1.2-linux-x64.tar.gz
+paradigm-memory-cli-v0.1.2-macos-arm64.tar.gz
+paradigm-memory-desktop-v0.1.2-windows-x64.zip
+paradigm-memory-desktop-v0.1.2-linux-x64.AppImage
+paradigm-memory-desktop-v0.1.2-macos-arm64.zip
 ```
 
 The one-line installers download those CLI/MCP assets from GitHub Releases and
-install them under `~/.paradigm/app/current`.
+install them under `~/.paradigm/app/current`. When a matching portable desktop
+asset is present, they also install it under `~/.paradigm/desktop/current`.
 
 ## Version Bump
 
@@ -121,10 +129,19 @@ The installers:
 1. Check Node 22+.
 2. Query GitHub Releases.
 3. Download the matching CLI/MCP archive.
-4. Extract it into `~/.paradigm/app/current`.
-5. Create command shims in `~/.paradigm/bin`.
-6. Add `~/.paradigm/bin` to PATH when possible.
-7. Best-effort register `paradigm-memory` with supported MCP clients.
+4. Download the matching portable desktop app when available.
+5. Extract the CLI/MCP archive into `~/.paradigm/app/current`.
+6. Install the desktop app into `~/.paradigm/desktop/current`.
+7. Create command shims in `~/.paradigm/bin`.
+8. Put `~/.paradigm/bin` first in PATH when possible.
+9. Best-effort register `paradigm-memory` with supported MCP clients.
+
+After install:
+
+- `paradigm` opens the desktop app.
+- `paradigm help` prints CLI help.
+- `paradigm version`, `paradigm serve`, `paradigm export`, and other
+  subcommands run the CLI.
 
 Memory data is not deleted during install or update.
 

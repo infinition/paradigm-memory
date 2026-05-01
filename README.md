@@ -9,7 +9,7 @@
 
 ## Quickstart
 
-One line. No clone, no manual setup.
+One line. No clone, no manual setup. The installer sets up the Paradigm Memory desktop app, the CLI, and the MCP server when matching release assets are available.
 
 **Windows (PowerShell):**
 
@@ -27,15 +27,28 @@ The installer:
 
 1. Checks for Node 22+ (refuses politely otherwise).
 2. Downloads the matching CLI/MCP bundle from GitHub Releases.
-3. Installs it under `~/.paradigm/app/current` and creates shims in `~/.paradigm/bin`.
-4. Bootstraps `~/.paradigm` (creates the dir; the first `paradigm` call seeds the schema).
-5. Best-effort registers the MCP with `claude`, `codex`, and `gemini` CLIs that are already on your PATH.
+3. Downloads the matching portable desktop app when available.
+4. Installs the CLI/MCP bundle under `~/.paradigm/app/current`.
+5. Installs the desktop app under `~/.paradigm/desktop/current`.
+6. Creates command shims in `~/.paradigm/bin` and puts that directory first in PATH.
+7. Bootstraps `~/.paradigm` (creates the dir; the first CLI call seeds the schema).
+8. Best-effort registers the MCP with `claude`, `codex`, and `gemini` CLIs that are already on your PATH.
 
 Then:
 
 ```bash
-paradigm version
+paradigm
 ```
+
+`paradigm` opens the desktop app. CLI commands remain available:
+
+```bash
+paradigm version
+paradigm serve
+paradigm export backup.brain
+```
+
+Prefer manual installers? Download the latest Windows `.exe` / `.msi`, macOS `.dmg`, or Linux `.AppImage` / `.deb` from [GitHub Releases](https://github.com/infinition/paradigm-memory/releases/latest).
 
 **Override defaults:**
 
@@ -44,7 +57,7 @@ paradigm version
 PARADIGM_MEMORY_DIR=/path/to/.paradigm bash <(curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh)
 
 # Pin a specific GitHub Release
-PARADIGM_VERSION=0.1.1 bash <(curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh)
+PARADIGM_VERSION=0.1.2 bash <(curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh)
 ```
 
 ```powershell
@@ -79,8 +92,10 @@ Paste [docs/INSTALL_PROMPT.md](docs/INSTALL_PROMPT.md) into Claude Code, Codex, 
 ## CLI
 
 ```bash
-paradigm                 # print help
-paradigm memory          # same (alias)
+paradigm                 # open Paradigm Memory
+paradigm help            # print help
+paradigm memory          # open Paradigm Memory
+paradigm app             # open Paradigm Memory
 paradigm version         # print version + active memory dir
 paradigm update          # show update instructions, never touches memory
 paradigm export          # prompt for .brain export path
@@ -238,8 +253,9 @@ Self-update is intentionally off by default. To allow an agent to call
 ## Paradigm Memory
 
 ```bash
-paradigm          # preferred
-npm run app:dev
+paradigm          # installed release
+paradigm app      # explicit desktop launch
+npm run app:dev   # source checkout
 ```
 
 Paradigm Memory is a human inspector: map, graph, search, review queue, audit timeline, export/import and dream. It is not a chat UI.

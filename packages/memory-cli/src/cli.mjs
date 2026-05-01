@@ -2,7 +2,7 @@
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { mkdir, readFile, readdir, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -18,8 +18,9 @@ function usage() {
   console.log(`paradigm ${VERSION}
 
 Usage:
-  paradigm                 print this help
-  paradigm memory          launch Paradigm Memory from a source checkout
+  paradigm                 launch Paradigm Memory when installed, otherwise print help
+  paradigm help            print this help
+  paradigm memory          launch Paradigm Memory
   paradigm app             same (alias)
   paradigm update          show update instructions
   paradigm uninstall       unregister MCP clients, keep memory by default
@@ -61,6 +62,15 @@ function run(cmd, args, opts = {}) {
     child.on("exit", (code) => code === 0 ? resolve() : reject(new Error(`${cmd} exited ${code}`)));
   });
 }
+function launchDetached(cmd, args = []) {
+  const child = spawn(cmd, args, {
+    detached: true,
+    stdio: "ignore",
+    env: { ...process.env, PARADIGM_MEMORY_DIR: memoryDir() },
+    shell: false
+  });
+  child.unref();
+}
 function findRepoRoot() {
   let cur = process.cwd();
   for (let i = 0; i < 8; i += 1) {
@@ -73,6 +83,34 @@ function findRepoRoot() {
   if (existsSync(path.join(cur2, "packages", "memory", "package.json"))) return cur2;
   return null;
 }
+function desktopDir() {
+  return path.resolve(process.env.PARADIGM_DESKTOP_DIR ?? path.join(process.env.PARADIGM_HOME ?? path.join(os.homedir(), ".paradigm"), "desktop", "current"));
+}
+function firstExisting(paths) {
+  return paths.find((candidate) => candidate && existsSync(candidate)) ?? null;
+}
+function installedDesktopApp() {
+  if (process.env.PARADIGM_DESKTOP_APP && existsSync(process.env.PARADIGM_DESKTOP_APP)) return process.env.PARADIGM_DESKTOP_APP;
+  const dir = desktopDir();
+  if (process.platform === "win32") return firstExisting([path.join(dir, "paradigm-memory.exe")]);
+  if (process.platform === "darwin") return firstExisting([path.join(dir, "Paradigm Memory.app")]);
+  if (process.platform === "linux") {
+    try {
+      const appImage = readdirSync(dir).find((entry) => entry.endsWith(".AppImage"));
+      return appImage ? path.join(dir, appImage) : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+function launchInstalledDesktop() {
+  const app = installedDesktopApp();
+  if (!app) return false;
+  if (process.platform === "darwin") launchDetached("open", [app]);
+  else launchDetached(app);
+  return true;
+}
 async function withService(fn) {
   const service = await createMemoryService({
     dataDir: memoryDir(),
@@ -82,9 +120,11 @@ async function withService(fn) {
   try { return await fn(service); } finally { service.close(); }
 }
 async function commandMemory() {
+  if (launchInstalledDesktop()) return;
   const root = findRepoRoot();
   if (!root) {
-    console.log("Install or update Paradigm Memory from GitHub Releases:");
+    console.log("No installed Paradigm Memory desktop app was found.");
+    console.log("Install or update from GitHub Releases:");
     console.log("  Windows: irm https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex");
     console.log("  Linux/macOS: curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash");
     return;
@@ -304,7 +344,7 @@ async function commandVersion() {
 }
 
 try {
-  const cmd = process.argv[2] ?? "help";
+  const cmd = process.argv[2] ?? "app";
   if (["-h", "--help", "help"].includes(cmd)) usage();
   else if (["app", "memory", "open", "launch"].includes(cmd)) await commandMemory();
   else if (cmd === "update") await commandUpdate();
