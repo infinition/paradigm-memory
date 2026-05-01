@@ -204,9 +204,8 @@ function GraphInner({ nodes, items, selectedId, onSelect, activatedIds, showItem
   // user drag.
   useEffect(() => {
     const key = topologyKey(rawNodes, rawEdges);
-    // Only auto-layout on first load or if the user explicitly cleared the ref.
-    // Topology changes after that (new nodes/items) won't snap the view.
-    if (key !== lastTopologyRef.current && lastTopologyRef.current === "") {
+    // Auto-layout if the topology changed (new nodes/edges) OR if it's the first real load.
+    if (key !== lastTopologyRef.current && key !== "::") {
       const laidOut = layoutWith(
         rawNodes.map((n) => ({ ...n, position: positionsRef.current.get(n.id) ?? n.position })),
         rawEdges
@@ -218,16 +217,18 @@ function GraphInner({ nodes, items, selectedId, onSelect, activatedIds, showItem
       lastTopologyRef.current = key;
       return;
     }
-    // Topology unchanged: merge data, keep positions (user drags preserved).
-    setFlowNodes((prev) => {
-      const byId = new Map(prev.map((n) => [n.id, n]));
-      return rawNodes.map((next) => {
-        const existing = byId.get(next.id);
-        return existing
-          ? { ...existing, data: next.data, selected: next.selected }
-          : { ...next, position: positionsRef.current.get(next.id) ?? next.position };
+    // Topology unchanged (simple tick/data update): merge data, keep existing positions.
+    if (key === lastTopologyRef.current) {
+      setFlowNodes((prev) => {
+        const byId = new Map(prev.map((n) => [n.id, n]));
+        return rawNodes.map((next) => {
+          const existing = byId.get(next.id);
+          return existing
+            ? { ...existing, data: next.data, selected: next.selected }
+            : { ...next, position: positionsRef.current.get(next.id) ?? next.position };
+        });
       });
-    });
+    }
     setFlowEdges(rawEdges);
   }, [rawNodes, rawEdges, setFlowNodes, setFlowEdges]);
 
