@@ -3,6 +3,12 @@ import type { MemoryItem, MemoryNode } from "../lib/types";
 import { mcp } from "../lib/mcp";
 import { toast } from "./Toast";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
+
 interface Props {
   node: MemoryNode | null;
   items: MemoryItem[];
@@ -172,22 +178,14 @@ export function ItemEditor({ node, items, workspace, onChanged }: Props) {
                     autoFocus
                   />
                 ) : (
-                  item.content.split("\n").map((line, i) => {
-                    if (line.startsWith("#")) {
-                      return <div key={i} style={{ fontWeight: 700, color: "var(--teal)", marginTop: i > 0 ? 6 : 0 }}>{line}</div>;
-                    }
-                    const parts = line.split(/(\*\*.*?\*\*)/g);
-                    return (
-                      <div key={i}>
-                        {parts.map((part, j) => {
-                          if (part.startsWith("**") && part.endsWith("**")) {
-                            return <strong key={j} style={{ color: "var(--ink)" }}>{part.slice(2, -2)}</strong>;
-                          }
-                          return part;
-                        })}
-                      </div>
-                    );
-                  })
+                  <div className="markdown-body">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm, remarkMath]}
+                      rehypePlugins={[rehypeKatex]}
+                    >
+                      {item.content}
+                    </ReactMarkdown>
+                  </div>
                 )}
               </div>
               <div className="rc-actions">
