@@ -240,7 +240,7 @@ test("MCP stdio smoke lists and calls every memory tool end-to-end", async () =>
         confidence: 0.9
       }
     });
-    assert.equal(parseToolPayload(updatedNode).node.label, "Updated Smoke Node");
+    assert.equal(parseToolPayload(updatedNode).label, "Updated Smoke Node");
 
     const moved = await send("tools/call", {
       name: "memory_move_item",
