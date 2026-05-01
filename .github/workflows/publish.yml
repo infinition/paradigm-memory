@@ -28,9 +28,6 @@ jobs:
       - run: npm pack --workspace @paradigm-memory/memory-mcp --dry-run
       - run: npm pack --workspace @paradigm-memory/memory-cli --dry-run
       - name: Publish to NPM
-        run: |
-          npm publish --workspace @paradigm-memory/memory-core --provenance --access public
-          npm publish --workspace @paradigm-memory/memory-mcp --provenance --access public
-          npm publish --workspace @paradigm-memory/memory-cli --provenance --access public
+        run: npm run release:publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -38,13 +38,17 @@ $nodeMajor = [int]$nodeVersion.TrimStart("v").Split(".")[0]
 if ($nodeMajor -lt 22) {
     Fail "Node $nodeMajor detected. Paradigm needs Node 22+ for the native sqlite module."
 }
-if (-not (Get-Command npm -ErrorAction SilentlyContinue)) { Fail "npm not on PATH (it ships with Node)." }
+$npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
+if (-not $npmCommand) { $npmCommand = Get-Command npm -ErrorAction SilentlyContinue }
+if (-not $npmCommand) { Fail "npm not on PATH (it ships with Node)." }
+$NpmCmd = $npmCommand.Source
 
 $pkgSpec = if ($Version) { "$NpmPkg@$Version" } else { $NpmPkg }
-$null = (& npm view $pkgSpec version 2>$null)
-if ($LASTEXITCODE -eq 0) {
+& $NpmCmd view $pkgSpec version *> $null
+$pkgOnNpm = $LASTEXITCODE -eq 0
+if ($pkgOnNpm) {
     Say "Installing $pkgSpec from npm ..."
-    npm install -g $pkgSpec --no-fund --no-audit
+    & $NpmCmd install -g $pkgSpec --no-fund --no-audit
 }
 else {
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
@@ -56,8 +60,8 @@ else {
         git clone --depth 1 --branch $Ref "https://github.com/$Repo.git" $tmp | Out-Null
         Push-Location $tmp
         try {
-            npm install --no-fund --no-audit
-            npm install -g `
+            & $NpmCmd install --no-fund --no-audit
+            & $NpmCmd install -g `
                 (Join-Path $tmp "packages\memory-core") `
                 (Join-Path $tmp "packages\memory-mcp") `
                 (Join-Path $tmp "packages\memory-cli") `

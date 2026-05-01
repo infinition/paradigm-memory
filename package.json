@@ -29,6 +29,7 @@
     "release:manifests": "node scripts/release-manifests.mjs",
     "release:check": "node scripts/release-check.mjs",
     "release:check:strict": "node scripts/release-check.mjs --strict",
+    "release:publish": "node scripts/publish-npm.mjs",
     "lint": "node scripts/lint.mjs",
     "test": "node --test",
     "test:coverage": "node --experimental-test-coverage --test",

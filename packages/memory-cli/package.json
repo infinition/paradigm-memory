@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "author": "Fabien POLLY",
   "bin": {
-    "paradigm": "./src/cli.mjs"
+    "paradigm": "src/cli.mjs"
   },
   "dependencies": {
     "@paradigm-memory/memory-mcp": "0.1.0"
@@ -21,7 +21,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/infinition/paradigm-memory",
+    "url": "git+https://github.com/infinition/paradigm-memory.git",
     "directory": "packages/memory-cli"
   },
   "homepage": "https://github.com/infinition/paradigm-memory",

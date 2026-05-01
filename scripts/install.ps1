@@ -29,15 +29,22 @@ if ($nodeMajor -lt 22) {
     Write-Info "Node $nodeMajor detected. Paradigm needs Node 22+ for native sqlite."
     exit 1
 }
+$npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
+if (-not $npmCommand) { $npmCommand = Get-Command npm -ErrorAction SilentlyContinue }
+if (-not $npmCommand) {
+    Write-Info "npm not found on PATH. It ships with Node 22+."
+    exit 1
+}
+$NpmCmd = $npmCommand.Source
 
 Write-Info "Installing dependencies in $rootDir ..."
 Push-Location $rootDir
 try {
-    npm install --no-fund --no-audit
+    & $NpmCmd install --no-fund --no-audit
     $corePackage = Join-Path $rootDir "packages\memory-core"
     $mcpPackage = Join-Path $rootDir "packages\memory-mcp"
     $cliPackage = Join-Path $rootDir "packages\memory-cli"
-    npm install -g $corePackage $mcpPackage $cliPackage --no-fund --no-audit
+    & $NpmCmd install -g $corePackage $mcpPackage $cliPackage --no-fund --no-audit
 }
 finally {
     Pop-Location
