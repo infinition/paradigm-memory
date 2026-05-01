@@ -367,7 +367,7 @@ test("memory_import_markdown chunks markdown into audited items", async () => {
   await withService("markdown-import", async (service) => {
     const result = await service.importMarkdown({
       workspace: "docs",
-      node_id: "projects.paradigm.memory",
+      node_id: "workspace",
       title: "notes.md",
       content: "# Notes\n\nParadigm markdown importer keeps Obsidian notes searchable.",
       tags: ["docs"],
@@ -387,7 +387,7 @@ test("memory_import_markdown chunks markdown into audited items", async () => {
 test("memory_delete and replace import create safety snapshots", async () => {
   await withService("safety-snapshots", async (service, dataDir) => {
     const written = await service.write({
-      node_id: "workspace",
+      node_id: "projects.paradigm.memory",
       content: "Snapshot safety item before delete.",
       tags: ["snapshot"]
     });

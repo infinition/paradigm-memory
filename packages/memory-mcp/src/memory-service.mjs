@@ -407,7 +407,7 @@ export async function createMemoryService({
 
   async function refreshAtlas(atlas) {
     if (typeof atlas.hydrateFromStore === "function") {
-      await refreshAtlas(atlas);
+      await atlas.hydrateFromStore();
       return;
     }
     if (typeof atlas.reload === "function") {
