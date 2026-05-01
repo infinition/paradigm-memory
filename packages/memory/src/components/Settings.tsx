@@ -5,9 +5,31 @@ interface Props {
   version: VersionResult | null;
   update: UpdateCheckResult | null;
   workspace?: string;
+  autoRefresh: boolean;
+  refreshSeconds: number;
+  onAutoRefreshChange: (enabled: boolean) => void;
+  onRefreshSecondsChange: (seconds: number) => void;
+  onExport: () => void;
+  onImport: () => void;
+  onRefresh: () => void;
+  onDoctorFix: (warm?: boolean) => void;
+  onReviewSnapshot: () => void;
 }
 
-export function Settings({ version, update, workspace }: Props) {
+export function Settings({
+  version,
+  update,
+  workspace,
+  autoRefresh,
+  refreshSeconds,
+  onAutoRefreshChange,
+  onRefreshSecondsChange,
+  onExport,
+  onImport,
+  onRefresh,
+  onDoctorFix,
+  onReviewSnapshot
+}: Props) {
   const copyCmd = (text: string) => {
     navigator.clipboard.writeText(text).then(() => toast.success("Copied!", text.slice(0, 60)));
   };
@@ -76,6 +98,38 @@ export function Settings({ version, update, workspace }: Props) {
       </div>
 
       <div className="settings-section">
+        <h3>Actions</h3>
+        <div className="settings-row">
+          <span className="label">Auto refresh</span>
+          <span className="value">
+            <label className="toggle-line">
+              <input type="checkbox" checked={autoRefresh} onChange={(event) => onAutoRefreshChange(event.target.checked)} />
+              enabled
+            </label>
+          </span>
+        </div>
+        <div className="settings-row">
+          <span className="label">Refresh interval</span>
+          <span className="value">
+            <select className="mini-select" value={refreshSeconds} onChange={(event) => onRefreshSecondsChange(Number(event.target.value))}>
+              <option value={5}>5s</option>
+              <option value={10}>10s</option>
+              <option value={30}>30s</option>
+              <option value={60}>60s</option>
+            </select>
+          </span>
+        </div>
+        <div className="settings-actions">
+          <button className="primary" onClick={onRefresh}>Refresh now</button>
+          <button className="ghost" onClick={onExport}>Export .brain</button>
+          <button className="ghost" onClick={onImport}>Import .brain</button>
+          <button className="ghost" onClick={onReviewSnapshot}>Compare snapshot</button>
+          <button className="ghost" onClick={() => onDoctorFix(false)}>Repair indexes</button>
+          <button className="ghost" onClick={() => onDoctorFix(true)}>Repair + warm</button>
+        </div>
+      </div>
+
+      <div className="settings-section">
         <h3>MCP Client Setup</h3>
         <p style={{ color: "var(--ink-soft)", fontSize: 12, marginBottom: 12 }}>
           Click a command to copy it to your clipboard.
@@ -94,6 +148,25 @@ export function Settings({ version, update, workspace }: Props) {
           <span className="copy-hint">click to copy</span>
           <strong style={{ color: "var(--teal)" }}>Gemini CLI</strong><br />
           gemini mcp add --scope user paradigm-memory {mcpPath}
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h3>Install / Uninstall</h3>
+        <div className="cmd-block" onClick={() => copyCmd("npm i -g @paradigm-memory/memory-cli @paradigm-memory/memory-mcp")}>
+          <span className="copy-hint">click to copy</span>
+          <strong style={{ color: "var(--teal)" }}>Install CLI + MCP</strong><br />
+          npm i -g @paradigm-memory/memory-cli @paradigm-memory/memory-mcp
+        </div>
+        <div className="cmd-block" style={{ marginTop: 8 }} onClick={() => copyCmd("npm update -g @paradigm-memory/memory-cli @paradigm-memory/memory-mcp")}>
+          <span className="copy-hint">click to copy</span>
+          <strong style={{ color: "var(--teal)" }}>Update</strong><br />
+          npm update -g @paradigm-memory/memory-cli @paradigm-memory/memory-mcp
+        </div>
+        <div className="cmd-block" style={{ marginTop: 8 }} onClick={() => copyCmd("npm uninstall -g @paradigm-memory/memory-cli @paradigm-memory/memory-mcp")}>
+          <span className="copy-hint">click to copy</span>
+          <strong style={{ color: "var(--red)" }}>Uninstall</strong><br />
+          npm uninstall -g @paradigm-memory/memory-cli @paradigm-memory/memory-mcp
         </div>
       </div>
 

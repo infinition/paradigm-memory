@@ -254,6 +254,50 @@ export const toolDefinitions = [
     }
   },
   {
+    name: "memory_move_item",
+    description: "Move an existing memory item to a different node. Audited.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["item_id", "node_id"],
+      properties: {
+        item_id: { type: "string", minLength: 1 },
+        node_id: { type: "string", minLength: 1 },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_update_node",
+    description: "Update an existing memory node's label or metadata. Audited.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id"],
+      properties: {
+        id: { type: "string", minLength: 1 },
+        label: { type: "string" },
+        one_liner: { type: "string" },
+        importance: { type: "number", minimum: 0, maximum: 1 },
+        confidence: { type: "number", minimum: 0, maximum: 1 },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_delete_node",
+    description: "Delete an existing memory node. Sub-nodes and items are moved to the parent node. Audited.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id"],
+      properties: {
+        id: { type: "string", minLength: 1 },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
     name: "memory_create_node",
     description: "Create a new node in the cognitive map. The id must be dotted snake_case (e.g. 'projects.myapp.auth'). Parent (if any) must exist. Audited as 'create_node'.",
     inputSchema: {
@@ -469,8 +513,11 @@ export async function callTool(service, name, args) {
   if (name === "memory_review") return service.review(args ?? {});
   if (name === "memory_list_proposed") return service.listProposed(args ?? {});
   if (name === "memory_update_item") return service.updateItem(args ?? {});
+  if (name === "memory_move_item") return service.moveItem(args ?? {});
   if (name === "memory_delete") return service.deleteItem(args ?? {});
   if (name === "memory_create_node") return service.createNode(args ?? {});
+  if (name === "memory_update_node") return service.updateNode(args ?? {});
+  if (name === "memory_delete_node") return service.deleteNode(args ?? {});
   if (name === "memory_export") return service.exportMemory(args ?? {});
   if (name === "memory_import") return service.importMemory(args ?? {});
   if (name === "memory_snapshot_diff") return service.snapshotDiff(args ?? {});

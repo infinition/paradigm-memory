@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { save, open } from "@tauri-apps/plugin-dialog";
-import { writeTextFile, readTextFile, readDir, mkdir } from "@tauri-apps/plugin-fs";
+import { readDir, mkdir, remove } from "@tauri-apps/plugin-fs";
 import { mcp } from "./lib/mcp";
 import type { DoctorResult, McpRuntimeStatus, MemoryItem, MemoryNode, SearchResult, SnapshotDiffResult, SnapshotListResult } from "./lib/types";
 import { Sidebar } from "./components/Sidebar";
@@ -21,6 +21,7 @@ interface WorkspaceState {
 }
 
 const EMPTY_STATE: WorkspaceState = { nodes: [], itemsByNode: {} };
+const WORKSPACE_NAME_RE = /^[a-zA-Z0-9._-]+$/;
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("map");
@@ -30,6 +31,7 @@ export default function App() {
   const [state, setState] = useState<WorkspaceState>(EMPTY_STATE);
   const [itemCounts, setItemCounts] = useState<Record<string, number>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
@@ -148,46 +150,55 @@ export default function App() {
   const selectedNode = state.nodes.find((node) => node.id === selectedId) ?? null;
   const selectedItems = selectedId ? state.itemsByNode[selectedId] ?? [] : [];
 
-  const handleWorkspaceChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const newWs = workspaceInput.trim();
-    if (!newWs) {
-        setWorkspace(undefined);
-        return;
-    }
-
-    if (existingWorkspaces.includes(newWs)) {
-        setWorkspace(newWs);
-    } else {
-        setShowCreateWorkspace(true);
-    }
+  const switchWorkspace = (value: string) => {
+    setWorkspace(value || undefined);
+    setWorkspaceInput(value);
   };
 
   const confirmCreateWorkspace = async () => {
     const newWs = workspaceInput.trim();
     if (!newWs || !version?.data_dir) return;
+    if (!WORKSPACE_NAME_RE.test(newWs)) {
+      toast.error("Invalid workspace", "Use letters, numbers, dots, underscores or dashes.");
+      return;
+    }
     try {
         const wsPath = `${version.data_dir}/workspaces/${newWs}`;
         await mkdir(wsPath, { recursive: true });
         setWorkspace(newWs);
+        setWorkspaceInput(newWs);
         setShowCreateWorkspace(false);
-        listWorkspaces(version.data_dir);
+        await listWorkspaces(version.data_dir);
         toast.success("Workspace created", newWs);
     } catch (err: any) {
         toast.error("Failed to create workspace", err.message);
     }
   };
 
+  const deleteCurrentWorkspace = async () => {
+    if (!workspace || !version?.data_dir) return;
+    const confirmation = window.prompt(`Delete workspace "${workspace}" and all its memory data? Type the workspace name to confirm.`);
+    if (confirmation !== workspace) return;
+    try {
+      await remove(`${version.data_dir}/workspaces/${workspace}`, { recursive: true });
+      toast.success("Workspace deleted", workspace);
+      setWorkspace(undefined);
+      setWorkspaceInput("");
+      await listWorkspaces(version.data_dir);
+    } catch (err: any) {
+      toast.error("Delete workspace failed", String(err?.message ?? err));
+    }
+  };
+
   const onExport = async () => {
     try {
-      const result = await mcp.exportSnapshot({ workspace });
       const path = await save({
         filters: [{ name: "Paradigm Brain", extensions: ["brain", "json"] }],
         defaultPath: `${workspace ?? "default"}-${new Date().toISOString().slice(0, 10)}.brain`
       });
       if (path) {
-        await writeTextFile(path, JSON.stringify(result.snapshot ?? result, null, 2));
-        toast.success("Exported", path);
+        const result = await mcp.exportSnapshot({ output_path: path, include_mutations: true, workspace });
+        toast.success("Exported", `${result.stats?.node_count ?? 0} node(s), ${result.stats?.item_count ?? 0} item(s)`);
       }
     } catch (err: any) {
       toast.error("Export failed", err.message);
@@ -201,11 +212,9 @@ export default function App() {
         filters: [{ name: "Paradigm Brain", extensions: ["brain", "json"] }]
       });
       if (path) {
-        const content = await readTextFile(path as string);
-        const data = JSON.parse(content);
-        await mcp.importSnapshot({ data, mode: "merge", workspace });
+        const result = await mcp.importSnapshot({ input_path: path as string, mode: "merge", workspace });
         await refresh();
-        toast.success("Imported", `Merged from ${(path as string).split(/[\\/]/).pop()}`);
+        toast.success("Imported", `${result.node_count ?? 0} node(s), ${result.item_count ?? 0} item(s)`);
       }
     } catch (err: any) {
       toast.error("Import failed", err.message);
@@ -241,6 +250,16 @@ export default function App() {
       toast.error("Dream failed", err.message);
     } finally {
       setDreamBusy(false);
+    }
+  };
+
+  const onMoveItem = async (itemId: string, newNodeId: string) => {
+    try {
+      await mcp.moveItem({ item_id: itemId, node_id: newNodeId, workspace });
+      onItemChanged();
+      toast.success("Item moved", newNodeId);
+    } catch (caught: any) {
+      toast.error("Move failed", String(caught?.message ?? caught));
     }
   };
 
@@ -287,10 +306,9 @@ export default function App() {
         filters: [{ name: "Paradigm Brain", extensions: ["brain", "json"] }]
       });
       if (!path) return;
-      const source = JSON.parse(await readTextFile(path as string));
       const current = await mcp.exportSnapshot({ workspace, include_mutations: true });
-      const diff = await mcp.snapshotDiff({ left: current.snapshot, right: source, workspace });
-      setSnapshotReview({ path: path as string, source, diff });
+      const diff = await mcp.snapshotDiff({ left: current.snapshot, right_path: path as string, workspace });
+      setSnapshotReview({ path: path as string, diff });
       toast.info("Snapshot compared", `${diff.summary.items_changed + diff.summary.items_added} restorable item(s)`);
     } catch (err: any) {
       toast.error("Snapshot compare failed", err.message);
@@ -350,6 +368,20 @@ export default function App() {
     }
   };
 
+  const focusAuditNode = (nodeId: string) => {
+    setSelectedId(nodeId);
+    setHighlightedItemId(null);
+    setSearchResult(null);
+    setTab("map");
+  };
+
+  const focusAuditItem = (nodeId: string, itemId: string) => {
+    setSelectedId(nodeId);
+    setHighlightedItemId(itemId);
+    setSearchResult(null);
+    setTab("map");
+  };
+
   return (
     <div className="app">
       <ToastContainer />
@@ -357,22 +389,26 @@ export default function App() {
       <div className="topbar">
         <h1>Paradigm - Memory</h1>
         {tab === "map" ? (
-          <SearchBar workspace={workspace} onResult={setSearchResult} />
+          <SearchBar 
+            workspace={workspace} 
+            onResult={setSearchResult} 
+            onQueryChange={setSidebarFilter}
+          />
         ) : <span />}
         <div className="actions">
-          <form onSubmit={handleWorkspaceChange} style={{ display: 'flex' }}>
-              <input
-                className="workspace-input"
-                placeholder="workspace"
-                value={workspaceInput}
-                onChange={(event) => setWorkspaceInput(event.target.value)}
-                list="workspace-list"
-                title="Press Enter to switch workspace"
-              />
-              <datalist id="workspace-list">
-                {existingWorkspaces.map(ws => <option key={ws} value={ws} />)}
-              </datalist>
-          </form>
+          <div className="workspace-switcher">
+            <select
+              className="workspace-input"
+              value={workspace ?? ""}
+              onChange={(event) => switchWorkspace(event.target.value)}
+              title="Switch workspace"
+            >
+              <option value="">default</option>
+              {existingWorkspaces.map(ws => <option key={ws} value={ws}>{ws}</option>)}
+            </select>
+            <button className="ghost small" onClick={() => { setWorkspaceInput(""); setShowCreateWorkspace(true); }} title="Create workspace">+</button>
+            <button className="danger ghost small" onClick={deleteCurrentWorkspace} disabled={!workspace} title="Delete current workspace">Delete</button>
+          </div>
           {version && (
             <span className="path-pill" title={version.workspace_dir}>
               {version.stats?.nodeCount ?? state.nodes.length}n / {version.stats?.itemCount ?? Object.values(itemCounts).reduce((s, c) => s + c, 0)}i
@@ -662,7 +698,20 @@ export default function App() {
         {!bootError && tab === "settings" && (
           <div className="layout" style={{ gridTemplateColumns: "1fr" }}>
             <div className="pane" style={{ borderRight: "none" }}>
-              <Settings version={version} update={update} workspace={workspace} />
+              <Settings
+                version={version}
+                update={update}
+                workspace={workspace}
+                autoRefresh={autoRefresh}
+                refreshSeconds={refreshSeconds}
+                onAutoRefreshChange={setAutoRefresh}
+                onRefreshSecondsChange={setRefreshSeconds}
+                onExport={onExport}
+                onImport={onImport}
+                onRefresh={refresh}
+                onDoctorFix={runDoctorFix}
+                onReviewSnapshot={reviewSnapshot}
+              />
             </div>
           </div>
         )}
@@ -678,6 +727,7 @@ export default function App() {
               activatedIds={activatedIds}
               searchFilter={sidebarFilter}
               onSearchFilterChange={setSidebarFilter}
+              onDropItem={onMoveItem}
               onCreateNode={() => {
                 setNewNodeId(selectedId ? selectedId + "." : "");
                 setShowCreateNode(true);
@@ -697,6 +747,7 @@ export default function App() {
                 items={Object.values(state.itemsByNode).flat()}
                 selectedId={selectedId}
                 onSelect={setSelectedId}
+                onSelectItem={setHighlightedItemId}
                 activatedIds={activatedIds}
                 showItems={showItems}
                 searchFilter={sidebarFilter}
@@ -707,8 +758,11 @@ export default function App() {
             <ItemEditor
               node={selectedNode}
               items={selectedItems}
+              allNodes={state.nodes}
               workspace={workspace}
               onChanged={onItemChanged}
+              onSelect={setSelectedId}
+              highlightedItemId={highlightedItemId}
             />
           </div>
         )}
@@ -719,7 +773,9 @@ export default function App() {
         )}
 
         {/* Audit tab */}
-        {!bootError && tab === "audit" && <AuditLog workspace={workspace} />}
+        {!bootError && tab === "audit" && (
+          <AuditLog workspace={workspace} onSelectNode={focusAuditNode} onSelectItem={focusAuditItem} />
+        )}
       </div>
 
       {/* Create Node Dialog */}
@@ -729,7 +785,16 @@ export default function App() {
             <h3>Create Node</h3>
             <div className="field">
               <label>Node ID (dotted path)</label>
-              <input value={newNodeId} onChange={e => setNewNodeId(e.target.value)} placeholder="projects.my_project" autoFocus />
+              <input 
+                value={newNodeId} 
+                onChange={e => setNewNodeId(e.target.value)} 
+                placeholder="projects.my_project" 
+                autoFocus 
+                list="existing-nodes"
+              />
+              <datalist id="existing-nodes">
+                {state.nodes.map(n => <option key={n.id} value={`${n.id}.`} />)}
+              </datalist>
             </div>
             <div className="field">
               <label>Label</label>
@@ -752,12 +817,18 @@ export default function App() {
         <div className="dialog-overlay" onClick={() => setShowCreateWorkspace(false)}>
           <div className="dialog" onClick={e => e.stopPropagation()}>
             <h3>Create Workspace</h3>
-            <p style={{ color: 'var(--ink-soft)', marginBottom: 16 }}>
-                Workspace <strong>{workspaceInput}</strong> does not exist. Create it?
-            </p>
+            <div className="field">
+              <label>Workspace name</label>
+              <input
+                value={workspaceInput}
+                onChange={(event) => setWorkspaceInput(event.target.value)}
+                placeholder="project-name"
+                autoFocus
+              />
+            </div>
             <div className="actions">
               <button className="ghost" onClick={() => setShowCreateWorkspace(false)}>Cancel</button>
-              <button className="primary" onClick={confirmCreateWorkspace}>Create</button>
+              <button className="primary" onClick={confirmCreateWorkspace} disabled={!workspaceInput.trim()}>Create</button>
             </div>
           </div>
         </div>

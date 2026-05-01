@@ -10,6 +10,7 @@ interface Props {
   searchFilter: string;
   onSearchFilterChange: (v: string) => void;
   onCreateNode?: () => void;
+  onDropItem?: (itemId: string, nodeId: string) => void;
 }
 
 interface TreeEntry {
@@ -17,6 +18,8 @@ interface TreeEntry {
   depth: number;
   children: TreeEntry[];
 }
+
+const ITEM_DRAG_MIME = "application/x-paradigm-memory-item";
 
 function buildForest(nodes: MemoryNode[]): TreeEntry[] {
   const byId = new Map<string, TreeEntry>();
@@ -51,7 +54,7 @@ function matchesFilter(entry: TreeEntry, filter: string): boolean {
   return entry.children.some(c => matchesFilter(c, filter));
 }
 
-export function Sidebar({ nodes, selectedId, onSelect, itemCounts, activatedIds, searchFilter, onSearchFilterChange, onCreateNode }: Props) {
+export function Sidebar({ nodes, selectedId, onSelect, itemCounts, activatedIds, searchFilter, onSearchFilterChange, onCreateNode, onDropItem }: Props) {
   const forest = useMemo(() => buildForest(nodes), [nodes]);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
@@ -76,12 +79,46 @@ export function Sidebar({ nodes, selectedId, onSelect, itemCounts, activatedIds,
 
     if (lf && !matches && !childMatches) return null;
 
+    const clearDragOver = (target: EventTarget & HTMLDivElement) => {
+      target.classList.remove("drag-over");
+    };
+
+    const getDraggedItemId = (event: React.DragEvent<HTMLDivElement>) => {
+      return event.dataTransfer.getData(ITEM_DRAG_MIME) || event.dataTransfer.getData("text/plain");
+    };
+
     return (
       <div key={entry.node.id}>
         <div
           className={`tree-node${isSelected ? " selected" : ""}${isActivated ? " activation-pulse" : ""}${lf && matches ? " highlighted" : ""}${lf && !matches ? " dim" : ""}`}
           style={{ paddingLeft: 12 + entry.depth * 16 }}
           onClick={() => onSelect(entry.node.id)}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.add("drag-over");
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = "move";
+            e.currentTarget.classList.add("drag-over");
+          }}
+          onDragLeave={(e) => {
+            e.stopPropagation();
+            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+              clearDragOver(e.currentTarget);
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            clearDragOver(e.currentTarget);
+            const itemId = getDraggedItemId(e);
+            if (itemId && onDropItem) {
+              onDropItem(itemId, entry.node.id);
+            }
+          }}
         >
           <span
             className="twisty"

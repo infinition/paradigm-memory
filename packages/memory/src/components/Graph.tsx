@@ -23,6 +23,7 @@ interface Props {
   items: MemoryItem[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onSelectItem?: (id: string | null) => void;
   activatedIds?: Set<string>;
   showItems?: boolean;
   searchFilter?: string;
@@ -171,7 +172,7 @@ function topologyKey(rawNodes: Node<NodeData>[], rawEdges: Edge[]): string {
   return `${nodeIds}::${edgeIds}`;
 }
 
-function GraphInner({ nodes, items, selectedId, onSelect, activatedIds, showItems, searchFilter, itemCounts, layoutTrigger }: Props) {
+function GraphInner({ nodes, items, selectedId, onSelect, onSelectItem, activatedIds, showItems, searchFilter, itemCounts, layoutTrigger }: Props) {
   const flow = useReactFlow();
   const lf = (searchFilter ?? "").toLowerCase();
 
@@ -264,9 +265,13 @@ function GraphInner({ nodes, items, selectedId, onSelect, activatedIds, showItem
         onNodeClick={(_, node) => {
           if (node.data.isItem) {
             const item = items.find((i) => i.id === node.id);
-            if (item) onSelect(item.node_id);
+            if (item) {
+              onSelect(item.node_id);
+              onSelectItem?.(item.id);
+            }
           } else {
             onSelect(node.id);
+            onSelectItem?.(null);
           }
         }}
         fitView={lastTopologyRef.current === ""}

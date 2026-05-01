@@ -815,6 +815,35 @@ export async function createAtlas({
       writeJsonFile(treePath, tree).catch((err) => process.stderr.write(`[atlas] tree.json mirror write failed: ${err?.message ?? err}\n`));
       return created;
     },
+    moveItem(itemId, newNodeId, options) {
+      const moved = store.moveItem(itemId, newNodeId, options);
+      if (moved) {
+        const existingIndex = items.findIndex((candidate) => candidate.id === itemId);
+        if (existingIndex >= 0) {
+          items[existingIndex].node_id = newNodeId;
+          writeJsonFile(itemsPath, items).catch((err) => process.stderr.write(`[atlas] items.json mirror write failed: ${err?.message ?? err}\n`));
+        }
+      }
+      return moved;
+    },
+    updateNode(node, options) {
+      const updated = store.updateNode(node, options);
+      const existingIndex = tree.nodes.findIndex((candidate) => candidate.id === node.id);
+      if (existingIndex >= 0) {
+        tree.nodes[existingIndex] = { ...tree.nodes[existingIndex], ...updated };
+        tree.updatedAt = nowIso();
+        writeJsonFile(treePath, tree).catch((err) => process.stderr.write(`[atlas] tree.json mirror write failed: ${err?.message ?? err}\n`));
+      }
+      return updated;
+    },
+    deleteNode(id, options) {
+      const deleted = store.deleteNode(id, options);
+      if (deleted) {
+        // Need full reload to catch all parent/child/item reassignments correctly
+        hydrateFromStore().catch((err) => process.stderr.write(`[atlas] hydrate failed after deleteNode: ${err?.message ?? err}\n`));
+      }
+      return deleted;
+    },
     listItems(options) {
       return store.listItems(options);
     },

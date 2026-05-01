@@ -3,6 +3,27 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.1] — 2026-05-01
+
+### Added — Desktop App (`@paradigm-memory/memory`)
+
+- **Interactive Reorganization**: Support for drag-and-drop items onto sidebar nodes for instant re-parenting.
+- **Advanced Metadata Editing**: Item cards now feature sliders for `importance` and `confidence` and a dedicated `tags` input in the edit mode.
+- **Smart Node Creation**: Added autocomplete for Node IDs in the creation modal, suggesting existing hierarchy paths to prevent fragmentation.
+- **Node Management**: New "Delete Node" action in the item editor header with automatic orphan re-parenting.
+- **Rich Content Display**: Enhanced Markdown rendering with support for line breaks (`remark-breaks`), math equations (`rehype-katex`), and secure external links.
+- **Visual Feedback**: Real-time `drag-over` highlighting on sidebar nodes during item moves.
+
+### Added — MCP Server (`@paradigm-memory/memory-mcp`)
+
+- New management tools: `memory_move_item`, `memory_update_node`, and `memory_delete_node`.
+- Enhanced `memory_update_item` schema to support granular metadata updates (importance, confidence, tags).
+
+### Changed — Engine (`@paradigm-memory/memory-core`)
+
+- **Smart Deletion Logic**: Deleting a node now preserves history by automatically moving all child nodes and items to the parent node (or the root workspace).
+- **Relational Consistency**: `moveItem` and node operations use SQL transactions to ensure data integrity during structural changes.
+
 ## [0.1.0] — 2026-04-30
 
 ### Added — Engine (`@paradigm-memory/memory-core`)

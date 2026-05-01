@@ -280,8 +280,10 @@ Paradigm Memory (Tauri shell, Rust)
   colour = status (active / proposed / latent), edges = parent-child + explicit links.
 - ✅ **Activation animation** — when the user types a query in the search bar,
   watch the activation propagate node-by-node with a pulse.
-- ✅ **Item editor (right)** — select an item; edit content / tags / importance /
-  confidence inline; show its mutation history.
+- ✅ **Advanced Item Editor** — select an item; edit content / tags / importance /
+  confidence inline; show its mutation history; metadata sliders for score adjustment.
+- ✅ **Interactive Organization** — drag-and-drop items onto sidebar nodes for re-parenting;
+  smart node deletion with automatic orphan inheritance to parents.
 - ✅ **Pending review queue** — single screen for proposed items: accept / reject
   / edit-then-accept in one click.
 - ✅ **Audit log timeline** — chronological view of `memory_mutations`, filterable
@@ -358,8 +360,7 @@ work in v0.3.
 - ⬜ **HTTP `/api/stats`** mirroring the CLI command.
 
 ### Desktop app polish
-- ⬜ Drag-to-reparent nodes on the graph, with a confirmation diff and a
-  `move_node` mutation type.
+- ✅ **Drag-to-reparent nodes** — supported via sidebar with a move tool; graph-based drag is future work.
 - ⬜ Multi-select items + bulk delete / bulk re-tag / bulk move.
 - ⬜ Light theme toggle (current UI is dark-only).
 

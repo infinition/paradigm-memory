@@ -5,9 +5,10 @@ import type { SearchResult } from "../lib/types";
 interface Props {
   workspace?: string;
   onResult: (result: SearchResult | null) => void;
+  onQueryChange?: (query: string) => void;
 }
 
-export function SearchBar({ workspace, onResult }: Props) {
+export function SearchBar({ workspace, onResult, onQueryChange }: Props) {
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [meta, setMeta] = useState<{ tokens: number; ms: number } | null>(null);
@@ -32,6 +33,7 @@ export function SearchBar({ workspace, onResult }: Props) {
 
   const onChange = (text: string) => {
     setQuery(text);
+    onQueryChange?.(text);
     if (debounce.current) window.clearTimeout(debounce.current);
     debounce.current = window.setTimeout(() => run(text), 350);
   };

@@ -135,8 +135,20 @@ export const mcp = {
     return callTool("memory_feedback", args);
   },
 
-  updateItem(args: { item_id: string; content: string; tags?: string[]; workspace?: string }): Promise<{ item: MemoryItem; mutation: MemoryMutation }> {
+  updateItem(args: { item_id: string; content: string; tags?: string[]; importance?: number; confidence?: number; workspace?: string }): Promise<{ item: MemoryItem; mutation: MemoryMutation }> {
     return callTool("memory_update_item", args);
+  },
+
+  moveItem(args: { item_id: string; node_id: string; workspace?: string }): Promise<{ success: boolean }> {
+    return callTool("memory_move_item", args);
+  },
+
+  updateNode(args: { id: string; label?: string; one_liner?: string; importance?: number; confidence?: number; workspace?: string }): Promise<MemoryNode> {
+    return callTool("memory_update_node", args);
+  },
+
+  deleteNode(args: { id: string; workspace?: string }): Promise<{ success: boolean }> {
+    return callTool("memory_delete_node", args);
   },
 
   importMarkdown(args: { node_id: string; content: string; title?: string; workspace?: string }): Promise<any> {

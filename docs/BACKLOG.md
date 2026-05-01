@@ -33,3 +33,13 @@ High-priority tasks and experiments to move Paradigm forward.
 - **Encrypted Storage**: Optional encryption for the SQLite database at rest.
 - **Multi-Entity Server**: Allow a single Paradigm server to host multiple isolated entities.
 - **Cloud Bridges**: Optional, encrypted backup to a cloud provider or IPFS.
+
+---
+
+## Completed ✅
+
+- **Interactive Reorganization**: Drag-and-drop items to nodes via the sidebar.
+- **Advanced Metadata Editor**: Sliders for importance/confidence and tag editing.
+- **Smart Node Deletion**: Backend inheritance logic for orphan items/nodes.
+- **Node ID Autocomplete**: Suggesting existing paths in the creation modal.
+- **Rich Markdown**: support for KaTeX and line breaks in item cards.

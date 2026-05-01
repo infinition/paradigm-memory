@@ -803,6 +803,105 @@ export async function createMemoryStore({ dataDir }) {
     `).all(limit).map(rowToItem);
   }
 
+  function moveItem(itemId, newNodeId, { actor = "agent", reason = "move_item" } = {}) {
+    const existing = db.prepare("SELECT node_id FROM memory_items WHERE id = ?").get(itemId);
+    if (!existing) return null;
+    db.exec("BEGIN");
+    try {
+      db.prepare("UPDATE memory_items SET node_id = ?, updated_at = ? WHERE id = ?").run(newNodeId, new Date().toISOString(), itemId);
+      writeMutation({
+        operation: "move",
+        item_id: itemId,
+        node_id: newNodeId,
+        reason,
+        actor,
+        payload: { from: existing.node_id, to: newNodeId }
+      });
+      db.exec("COMMIT");
+      return true;
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  function updateNode(node, { actor = "agent", reason = "update_node" } = {}) {
+    validateMemoryNode(node);
+    db.exec("BEGIN");
+    try {
+      db.prepare(`
+        UPDATE memory_nodes SET
+          label = ?,
+          summary = ?,
+          one_liner = ?,
+          importance = ?,
+          confidence = ?,
+          last_touched = ?
+        WHERE id = ?
+      `).run(
+        node.label,
+        node.summary ?? "",
+        node.one_liner ?? "",
+        node.importance ?? 0.5,
+        node.confidence ?? 0.8,
+        new Date().toISOString(),
+        node.id
+      );
+      writeMutation({
+        operation: "update_node",
+        node_id: node.id,
+        reason,
+        actor,
+        payload: node
+      });
+      db.exec("COMMIT");
+      return node;
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  function deleteNode(id, { actor = "agent", reason = "delete_node" } = {}) {
+    const node = db.prepare("SELECT * FROM memory_nodes WHERE id = ?").get(id);
+    if (!node) return null;
+
+    const parentId = parentIdFor(node);
+    
+    db.exec("BEGIN");
+    try {
+      // 1. Move items to parent (or "workspace" if no parent)
+      const targetId = parentId ?? "workspace";
+      db.prepare("UPDATE memory_items SET node_id = ? WHERE node_id = ?").run(targetId, id);
+      
+      // 2. Move sub-nodes to parent
+      db.prepare("UPDATE memory_nodes SET parent_id = ? WHERE parent_id = ?").run(parentId, id);
+      
+      // 3. Remove from parent's children list
+      if (parentId) {
+        const parent = db.prepare("SELECT children FROM memory_nodes WHERE id = ?").get(parentId);
+        const children = parseJson(parent?.children, []).filter((childId) => childId !== id);
+        db.prepare("UPDATE memory_nodes SET children = ? WHERE id = ?").run(json(children), parentId);
+      }
+
+      // 4. Finally delete the node
+      db.prepare("DELETE FROM memory_nodes WHERE id = ?").run(id);
+
+      writeMutation({
+        operation: "delete_node",
+        node_id: id,
+        reason,
+        actor,
+        payload: { id, moved_to: targetId }
+      });
+      db.exec("COMMIT");
+      return true;
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
   function reviewItem(id, { action, actor = "reviewer", reason = "" } = {}) {
     if (action !== "accept" && action !== "reject") {
       throw new Error(`Unsupported review action: ${action}`);
@@ -864,8 +963,11 @@ export async function createMemoryStore({ dataDir }) {
     searchItems,
     upsertItem,
     deleteItem,
+    moveItem,
     reviewItem,
     createNode,
+    updateNode,
+    deleteNode,
     listNodes,
     listItems,
     listMutations,

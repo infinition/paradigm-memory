@@ -118,7 +118,11 @@ paradigm uninstall       # unregister MCP clients, keep ~/.paradigm
 | `memory_review` | accept/reject proposed item | accept/reject |
 | `memory_list_proposed` | review queue | no |
 | `memory_delete` | soft-delete item, keep audit | delete |
+| `memory_update_item` | edit content, tags, importance, confidence | update |
+| `memory_move_item` | move item to a different node | update |
 | `memory_create_node` | create a cognitive-map branch | create_node |
+| `memory_update_node` | update node label, importance, confidence | update |
+| `memory_delete_node` | delete node, move items/children to parent | delete |
 | `memory_export` | export versioned .brain snapshot | no |
 | `memory_import` | import .brain snapshot | import |
 | `memory_snapshot_diff` | compare two .brain snapshots | no |

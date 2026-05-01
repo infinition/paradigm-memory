@@ -62,6 +62,28 @@ const updateItemSchema = z.object({
   item_id: z.string().trim().min(1),
   content: z.string().trim().min(1),
   tags: z.array(z.string()).optional(),
+  importance: z.number().min(0).max(1).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  workspace: workspaceField
+});
+
+const moveItemSchema = z.object({
+  item_id: z.string().trim().min(1),
+  node_id: z.string().trim().min(1),
+  workspace: workspaceField
+});
+
+const updateNodeSchema = z.object({
+  id: z.string().trim().min(1),
+  label: z.string().trim().min(1).optional(),
+  one_liner: z.string().optional(),
+  importance: z.number().min(0).max(1).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  workspace: workspaceField
+});
+
+const deleteNodeSchema = z.object({
+  id: z.string().trim().min(1),
   workspace: workspaceField
 });
 
@@ -995,6 +1017,8 @@ export async function createMemoryService({
         ...existing,
         content: args.content,
         tags: args.tags ?? existing.tags,
+        importance: args.importance ?? existing.importance,
+        confidence: args.confidence ?? existing.confidence,
         updated_at: timestamp
       }, { actor: "mcp", reason: "update_via_studio" });
 
@@ -1006,6 +1030,49 @@ export async function createMemoryService({
         result: { item_id: updated.id, mutation_id: result.mutation?.id }
       });
       return result;
+    },
+
+    async moveItem(input) {
+      const args = moveItemSchema.parse(input);
+      const atlas = await getAtlas(args.workspace);
+      const success = atlas.moveItem(args.item_id, args.node_id, { actor: "mcp", reason: "move_via_studio" });
+      if (!success) {
+        const error = new Error(`Unknown memory item: ${args.item_id}`);
+        error.code = "unknown_item";
+        throw error;
+      }
+      await atlas.hydrateFromStore();
+      return { success: true };
+    },
+
+    async updateNode(input) {
+      const args = updateNodeSchema.parse(input);
+      const atlas = await getAtlas(args.workspace);
+      const existing = atlas.tree.nodes.find((n) => n.id === args.id);
+      if (!existing) {
+        const error = new Error(`Unknown node: ${args.id}`);
+        error.code = "unknown_node";
+        throw error;
+      }
+      const updated = atlas.updateNode({
+        ...existing,
+        ...args
+      }, { actor: "mcp", reason: "update_via_studio" });
+      await atlas.hydrateFromStore();
+      return updated;
+    },
+
+    async deleteNode(input) {
+      const args = deleteNodeSchema.parse(input);
+      const atlas = await getAtlas(args.workspace);
+      const success = atlas.deleteNode(args.id, { actor: "mcp", reason: "delete_via_studio" });
+      if (!success) {
+        const error = new Error(`Unknown node: ${args.id}`);
+        error.code = "unknown_node";
+        throw error;
+      }
+      await atlas.hydrateFromStore();
+      return { success: true };
     },
 
     async createNode(input) {
