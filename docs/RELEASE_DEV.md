@@ -18,15 +18,16 @@ The `Release` workflow publishes:
 - CLI/MCP archives for:
   - `windows-x64`
   - `linux-x64`
-  - `macos-x64`
   - `macos-arm64`
+
+macOS release assets target Apple Silicon only. Intel macOS is intentionally not
+published.
 
 CLI assets are named like:
 
 ```text
 paradigm-memory-cli-v0.1.1-windows-x64.tar.gz
 paradigm-memory-cli-v0.1.1-linux-x64.tar.gz
-paradigm-memory-cli-v0.1.1-macos-x64.tar.gz
 paradigm-memory-cli-v0.1.1-macos-arm64.tar.gz
 ```
 

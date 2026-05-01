@@ -15,5 +15,5 @@ export async function createTempDataDir(label = "test") {
 }
 
 export async function cleanupTempDataDir(dataDir) {
-  await rm(dataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  await rm(dataDir, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
 }

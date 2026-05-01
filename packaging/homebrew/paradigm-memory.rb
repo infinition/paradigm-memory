@@ -10,10 +10,6 @@ class ParadigmMemory < Formula
       url "https://github.com/infinition/paradigm-memory/releases/download/v0.1.1/paradigm-memory-cli-v0.1.1-macos-arm64.tar.gz"
       sha256 "REPLACE_WITH_GITHUB_RELEASE_SHA256"
     end
-    on_intel do
-      url "https://github.com/infinition/paradigm-memory/releases/download/v0.1.1/paradigm-memory-cli-v0.1.1-macos-x64.tar.gz"
-      sha256 "REPLACE_WITH_GITHUB_RELEASE_SHA256"
-    end
   end
 
   def install

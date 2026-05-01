@@ -40,6 +40,10 @@ case "$(uname -m)" in
   *) fail "Unsupported architecture: $(uname -m)" ;;
 esac
 
+if [ "$OS" = "macos" ] && [ "$ARCH" = "x64" ]; then
+  fail "Intel macOS is not published. Paradigm Memory macOS releases target Apple Silicon."
+fi
+
 if [ -n "$VERSION" ]; then
   RELEASE_API="https://api.github.com/repos/$REPO/releases/tags/v$VERSION"
 else

@@ -41,10 +41,7 @@ jobs:
           - runner: ubuntu-22.04
             asset_platform: linux
             asset_arch: x64
-          - runner: macos-13
-            asset_platform: macos
-            asset_arch: x64
-          - runner: macos-14
+          - runner: macos-26
             asset_platform: macos
             asset_arch: arm64
     steps:
@@ -76,7 +73,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-latest, macos-latest, ubuntu-22.04]
+        platform: [windows-latest, macos-26, ubuntu-22.04]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

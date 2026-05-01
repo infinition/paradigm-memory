@@ -357,8 +357,8 @@ test("concurrent SQLite writers share one data dir without lock failures", async
     const result = await services[0].search({ query: marker, limit: 50 });
     assert.equal(result.evidence.filter((item) => item.content.includes(marker)).length, 20);
   } finally {
-    for (const service of services) service.close();
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    for (const service of services) await service.close?.();
+    await new Promise((resolve) => setTimeout(resolve, 500));
     await cleanupTempDataDir(dataDir);
   }
 });
