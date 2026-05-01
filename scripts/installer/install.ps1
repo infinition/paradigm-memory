@@ -91,5 +91,5 @@ Register-With "gemini"
 
 Say "Done."
 Say "Try:    paradigm version"
-Say "Or:     paradigm doctor   |   paradigm studio   |   paradigm dream"
+Say "Or:     paradigm doctor   |   paradigm memory   |   paradigm dream"
 Say "Then restart your MCP client (Claude Code / Codex / Gemini) and call memory_search."
