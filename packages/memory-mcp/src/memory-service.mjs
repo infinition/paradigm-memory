@@ -462,7 +462,6 @@ export async function createMemoryService({
       const stats = atlas.memoryStats();
       return {
         package_name: packageMeta.name,
-        canary: "HELLO_FROM_SOURCE",
         version: packageMeta.version,
         protocol_version: protocolVersion,
         tool_count: toolCount,
