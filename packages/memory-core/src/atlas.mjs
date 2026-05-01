@@ -741,6 +741,7 @@ export async function createAtlas({
   }
 
   return {
+    hydrateFromStore,
     get tree() {
       return tree;
     },

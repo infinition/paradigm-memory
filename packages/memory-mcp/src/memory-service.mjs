@@ -550,6 +550,7 @@ export async function createMemoryService({
     async search(input) {
       const args = searchSchema.parse(input);
       const atlas = await getAtlas(args.workspace);
+      await atlas.hydrateFromStore();
       const started = performance.now();
       const pack = await atlas.buildContextPackAsync(args.query, {
         maxTokens: 1200,
@@ -735,6 +736,7 @@ export async function createMemoryService({
     async mutations(input) {
       const args = mutationsSchema.parse(input ?? {});
       const atlas = await getAtlas(args.workspace);
+      await atlas.hydrateFromStore();
       const limit = args.limit ?? 200;
       const mutations = atlas.listMutations(limit);
       return {
@@ -791,6 +793,7 @@ export async function createMemoryService({
     async read(input) {
       const args = readSchema.parse(input);
       const atlas = await getAtlas(args.workspace);
+      await atlas.hydrateFromStore();
       const node = findNode(atlas, args.node_id);
       if (!node) {
         const error = new Error(`Unknown memory node: ${args.node_id}`);
@@ -825,6 +828,7 @@ export async function createMemoryService({
     async tree(input) {
       const args = treeSchema.parse(input ?? {});
       const atlas = await getAtlas(args.workspace);
+      await atlas.hydrateFromStore();
       const includeItems = args.include_items ?? false;
       const statuses = args.include_proposed ? ["active", "proposed"] : ["active"];
       const items = includeItems
