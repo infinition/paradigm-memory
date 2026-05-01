@@ -228,6 +228,18 @@ export async function createAtlas({
     contextPack: []
   };
 
+  async function hydrateFromStore() {
+    const nodes = store.listNodes();
+    tree.nodes = nodes;
+    tree.roots = nodes.filter((node) => !node.parent_id).map((node) => node.id);
+    tree.updatedAt = nowIso();
+    items = store.listItems({ limit: 100000, includeDeleted: true });
+    await writeJsonFile(treePath, tree);
+    await writeJsonFile(itemsPath, items);
+  }
+
+  await hydrateFromStore();
+
   function nodeById() {
     return new Map(tree.nodes.map((node) => [node.id, node]));
   }
@@ -760,6 +772,7 @@ export async function createAtlas({
       const existingIndex = items.findIndex((candidate) => candidate.id === written.id);
       if (existingIndex >= 0) items[existingIndex] = written;
       else items.push(written);
+      writeJsonFile(itemsPath, items).catch((err) => process.stderr.write(`[atlas] items.json mirror write failed: ${err?.message ?? err}\n`));
       return written;
     },
     deleteItem(id, options) {
@@ -767,6 +780,7 @@ export async function createAtlas({
       if (deleted) {
         const existingIndex = items.findIndex((candidate) => candidate.id === id);
         if (existingIndex >= 0) items[existingIndex] = { ...items[existingIndex], status: "deleted", deleted_at: deleted.deleted_at };
+        writeJsonFile(itemsPath, items).catch((err) => process.stderr.write(`[atlas] items.json mirror write failed: ${err?.message ?? err}\n`));
       }
       return deleted;
     },
@@ -776,6 +790,7 @@ export async function createAtlas({
         const existingIndex = items.findIndex((candidate) => candidate.id === id);
         if (existingIndex >= 0) items[existingIndex] = reviewed;
         else items.push(reviewed);
+        writeJsonFile(itemsPath, items).catch((err) => process.stderr.write(`[atlas] items.json mirror write failed: ${err?.message ?? err}\n`));
       }
       return reviewed;
     },
@@ -796,7 +811,7 @@ export async function createAtlas({
         tree.roots = [...(tree.roots ?? []), created.id];
       }
       tree.updatedAt = nowIso();
-      writeJsonFile(treePath, tree).catch(() => {});
+      writeJsonFile(treePath, tree).catch((err) => process.stderr.write(`[atlas] tree.json mirror write failed: ${err?.message ?? err}\n`));
       return created;
     },
     listItems(options) {
@@ -810,22 +825,17 @@ export async function createAtlas({
     },
     async importSnapshot(snapshot, options) {
       const result = store.importSnapshot(snapshot, options);
-      tree = await readJsonFile(treePath, tree);
-      items = await readJsonFile(itemsPath, items);
-      const nodes = store.listNodes();
-      tree.nodes = nodes;
-      tree.roots = nodes.filter((node) => !node.parent_id).map((node) => node.id);
-      tree.updatedAt = nowIso();
-      await writeJsonFile(treePath, tree);
+      await hydrateFromStore();
       return result;
+    },
+    rebuildIndexes() {
+      store.rebuildFts();
     },
     memoryStats() {
       return store.stats();
     },
     async reload() {
-      tree = await readJsonFile(treePath, tree);
-      items = await readJsonFile(itemsPath, items);
-      store.syncFromSeed(tree, items);
+      await hydrateFromStore();
     },
     close() {
       store.close();

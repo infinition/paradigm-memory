@@ -68,20 +68,29 @@ test("MCP stdio smoke lists and calls every memory tool end-to-end", async () =>
       [
         "memory_create_node",
         "memory_delete",
+        "memory_doctor",
+        "memory_doctor_fix",
         "memory_dream",
         "memory_export",
+        "memory_feedback",
         "memory_import",
         "memory_import_markdown",
         "memory_list_proposed",
+        "memory_mutations",
         "memory_propose_write",
         "memory_read",
         "memory_review",
         "memory_search",
         "memory_self_update",
+        "memory_snapshot_diff",
+        "memory_snapshot_restore",
+        "memory_snapshots",
+        "memory_stats",
         "memory_tree",
         "memory_update_check",
         "memory_update_item",
         "memory_version",
+        "memory_warm",
         "memory_write"
       ]
     );
@@ -117,6 +126,33 @@ test("MCP stdio smoke lists and calls every memory tool end-to-end", async () =>
     assert.ok(treePayload.nodes.length > 0);
     assert.ok(treePayload.items.length > 0);
 
+    const doctor = await send("tools/call", {
+      name: "memory_doctor",
+      arguments: {}
+    });
+    const doctorPayload = parseToolPayload(doctor);
+    assert.equal(typeof doctorPayload.score, "number");
+    assert.ok(Array.isArray(doctorPayload.checks));
+
+    const doctorFix = await send("tools/call", {
+      name: "memory_doctor_fix",
+      arguments: { dry_run: true }
+    });
+    assert.equal(parseToolPayload(doctorFix).dry_run, true);
+
+    const stats = await send("tools/call", {
+      name: "memory_stats",
+      arguments: {}
+    });
+    const statsPayload = parseToolPayload(stats);
+    assert.ok(statsPayload.counts.nodes > 0);
+
+    const mutationsInitial = await send("tools/call", {
+      name: "memory_mutations",
+      arguments: { limit: 5 }
+    });
+    assert.ok(Array.isArray(parseToolPayload(mutationsInitial).mutations));
+
     const read = await send("tools/call", {
       name: "memory_read",
       arguments: { node_id: "projects.paradigm.memory", include_items: true }
@@ -147,8 +183,10 @@ test("MCP stdio smoke lists and calls every memory tool end-to-end", async () =>
       name: "memory_search",
       arguments: { query: "MCP smoke proposed audit-only write", limit: 5 }
     });
+    const searchProposedPayload = parseToolPayload(searchProposed);
+    assert.ok(Array.isArray(searchProposedPayload.debug.why.evidence));
     assert.ok(
-      !parseToolPayload(searchProposed).evidence.some((item) => item.id === proposedPayload.item.id),
+      !searchProposedPayload.evidence.some((item) => item.id === proposedPayload.item.id),
       "proposed items must not surface in memory.search"
     );
 
@@ -181,6 +219,18 @@ test("MCP stdio smoke lists and calls every memory tool end-to-end", async () =>
     assert.equal(directPayload.item.status, "active");
     assert.equal(directPayload.mutation.operation, "write");
 
+    const feedback = await send("tools/call", {
+      name: "memory_feedback",
+      arguments: { item_id: directPayload.item.id, signal: "useful" }
+    });
+    assert.ok(parseToolPayload(feedback).item.tags.includes("feedback:useful"));
+
+    const warm = await send("tools/call", {
+      name: "memory_warm",
+      arguments: {}
+    });
+    assert.equal(typeof parseToolPayload(warm).enabled, "boolean");
+
     const markdown = await send("tools/call", {
       name: "memory_import_markdown",
       arguments: {
@@ -193,6 +243,35 @@ test("MCP stdio smoke lists and calls every memory tool end-to-end", async () =>
     const markdownPayload = parseToolPayload(markdown);
     assert.equal(markdownPayload.item_count, 1);
     assert.equal(markdownPayload.items[0].status, "active");
+
+    const exported = await send("tools/call", {
+      name: "memory_export",
+      arguments: { include_deleted: true }
+    });
+    const exportedPayload = parseToolPayload(exported);
+    const changed = await send("tools/call", {
+      name: "memory_update_item",
+      arguments: { item_id: directPayload.item.id, content: "MCP direct write smoke changed.", tags: ["changed"] }
+    });
+    assert.equal(parseToolPayload(changed).item.content, "MCP direct write smoke changed.");
+
+    const diff = await send("tools/call", {
+      name: "memory_snapshot_diff",
+      arguments: { left: exportedPayload.snapshot, right: exportedPayload.snapshot }
+    });
+    assert.equal(parseToolPayload(diff).summary.items_changed, 0);
+
+    const restored = await send("tools/call", {
+      name: "memory_snapshot_restore",
+      arguments: { source: exportedPayload.snapshot, item_ids: [directPayload.item.id] }
+    });
+    assert.equal(parseToolPayload(restored).item_count, 1);
+
+    const snapshots = await send("tools/call", {
+      name: "memory_snapshots",
+      arguments: { limit: 5 }
+    });
+    assert.ok(Array.isArray(parseToolPayload(snapshots).snapshots));
   } finally {
     child.kill("SIGTERM");
     await once(child, "exit");

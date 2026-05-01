@@ -155,6 +155,7 @@ export async function createMemoryStore({ dataDir }) {
   db.exec(`
     PRAGMA journal_mode = WAL;
     PRAGMA foreign_keys = ON;
+    PRAGMA busy_timeout = 5000;
 
     CREATE TABLE IF NOT EXISTS memory_nodes (
       id TEXT PRIMARY KEY,
@@ -552,16 +553,26 @@ export async function createMemoryStore({ dataDir }) {
   function stats() {
     const nodeCount = db.prepare("SELECT count(*) AS count FROM memory_nodes").get().count;
     const itemCount = db.prepare("SELECT count(*) AS count FROM memory_items").get().count;
+    const activeItemCount = db.prepare("SELECT count(*) AS count FROM memory_items WHERE COALESCE(status, 'active') = 'active' AND deleted_at IS NULL").get().count;
+    const proposedItemCount = db.prepare("SELECT count(*) AS count FROM memory_items WHERE COALESCE(status, 'active') = 'proposed' AND deleted_at IS NULL").get().count;
+    const deletedItemCount = db.prepare("SELECT count(*) AS count FROM memory_items WHERE COALESCE(status, 'active') = 'deleted' OR deleted_at IS NOT NULL").get().count;
     const dbInfo = db.prepare("PRAGMA page_count").get();
     const pageSize = db.prepare("PRAGMA page_size").get();
+    const journalMode = db.prepare("PRAGMA journal_mode").get();
+    const busyTimeout = db.prepare("PRAGMA busy_timeout").get();
     return {
       path: dbPath,
       nodeCount,
       itemCount,
+      activeItemCount,
+      proposedItemCount,
+      deletedItemCount,
       embeddingCount: db.prepare("SELECT count(*) AS count FROM memory_embeddings").get().count,
       pageCount: dbInfo.page_count,
       pageSize: pageSize.page_size,
       approximateBytes: dbInfo.page_count * pageSize.page_size,
+      journalMode: journalMode.journal_mode,
+      busyTimeoutMs: busyTimeout.timeout,
       fts: true
     };
   }
@@ -839,6 +850,11 @@ export async function createMemoryStore({ dataDir }) {
   }
 
   function close() {
+    try {
+      db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+    } catch {
+      // Another connection may still be alive; closing the handle is enough.
+    }
     db.close();
   }
 
@@ -855,6 +871,7 @@ export async function createMemoryStore({ dataDir }) {
     listMutations,
     exportSnapshot,
     importSnapshot,
+    rebuildFts,
     getCachedEmbedding,
     upsertCachedEmbedding,
     stats,

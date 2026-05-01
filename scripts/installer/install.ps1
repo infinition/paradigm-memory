@@ -1,6 +1,6 @@
 # paradigm-memory one-liner installer (Windows PowerShell).
 #
-#   irm https://raw.githubusercontent.com/Infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex
 #
 # What it does:
 #   - Verifies Node 22+ and npm.
@@ -18,7 +18,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$Repo    = "Infinition/paradigm-memory"
+$Repo    = "infinition/paradigm-memory"
 $NpmPkg  = "@paradigm-memory/memory-cli"
 $Ref     = if ($env:PARADIGM_REF)     { $env:PARADIGM_REF }     else { "main" }
 $Version = $env:PARADIGM_VERSION
@@ -33,7 +33,8 @@ function Fail ($msg) { Write-Host "[paradigm] $msg" -ForegroundColor Red; exit 1
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
     Fail "Node 22+ required. Install from https://nodejs.org and re-run."
 }
-$nodeMajor = [int](node -p 'process.versions.node.split(".")[0]')
+$nodeVersion = (node --version).Trim()
+$nodeMajor = [int]$nodeVersion.TrimStart("v").Split(".")[0]
 if ($nodeMajor -lt 22) {
     Fail "Node $nodeMajor detected. Paradigm needs Node 22+ for the native sqlite module."
 }

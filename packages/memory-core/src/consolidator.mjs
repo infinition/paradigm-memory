@@ -155,7 +155,8 @@ export async function dream(snapshot, options = {}) {
         p.suggested_summary = newSummary;
         p.rationale += ` Reasoner suggested a new summary.`;
       } catch (err) {
-        console.warn(`[dream] Reasoner failed for node ${p.node_id}:`, err);
+        // stderr only — stdio MCP servers must keep stdout JSON-RPC clean.
+        process.stderr.write(`[dream] Reasoner failed for node ${p.node_id}: ${err?.message ?? err}\n`);
       }
     }
   }

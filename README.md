@@ -11,13 +11,13 @@ One line. No clone, no manual setup.
 **Windows (PowerShell):**
 
 ```powershell
-irm https://raw.githubusercontent.com/Infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex
+irm https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex
 ```
 
 **Linux / macOS:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Infinition/paradigm-memory/main/scripts/installer/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash
 ```
 
 The installer:
@@ -37,15 +37,15 @@ paradigm version
 
 ```bash
 # Custom memory dir
-PARADIGM_MEMORY_DIR=/path/to/.paradigm bash <(curl -fsSL https://raw.githubusercontent.com/Infinition/paradigm-memory/main/scripts/installer/install.sh)
+PARADIGM_MEMORY_DIR=/path/to/.paradigm bash <(curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh)
 
 # Pin a specific version
-PARADIGM_VERSION=0.1.0  bash <(curl -fsSL https://raw.githubusercontent.com/Infinition/paradigm-memory/main/scripts/installer/install.sh)
+PARADIGM_VERSION=0.1.0  bash <(curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh)
 ```
 
 ```powershell
 $env:PARADIGM_MEMORY_DIR = "D:\my\.paradigm"
-irm https://raw.githubusercontent.com/Infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex
+irm https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex
 ```
 
 Memory lives in `~/.paradigm` by default. It survives package reinstalls and `node_modules` wipes. Override with `PARADIGM_MEMORY_DIR=/path`.
@@ -56,14 +56,14 @@ If you cloned the repo for development, use the in-tree installer instead. It us
 
 ```bash
 # Linux / macOS
-git clone https://github.com/Infinition/paradigm-memory.git
+git clone https://github.com/infinition/paradigm-memory.git
 cd paradigm-memory
 bash ./scripts/install.sh
 ```
 
 ```powershell
 # Windows
-git clone https://github.com/Infinition/paradigm-memory.git
+git clone https://github.com/infinition/paradigm-memory.git
 cd paradigm-memory
 powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
@@ -76,7 +76,7 @@ Paste [docs/INSTALL_PROMPT.md](docs/INSTALL_PROMPT.md) into Claude Code, Codex, 
 
 ```bash
 paradigm                 # launch Paradigm Memory from a source checkout
-paradigm studio          # same
+paradigm memory          # same (alias)
 paradigm version         # print version + active memory dir
 paradigm update          # update packages / reinstall deps, never touches memory
 paradigm export          # prompt for .brain export path
@@ -85,6 +85,13 @@ paradigm import          # prompt for .brain import path
 paradigm import backup.brain --mode merge
 paradigm ingest ./notes --node projects.research
 paradigm ingest ./vault --node projects.research --proposed
+paradigm stats           # workspace counts and storage statistics
+paradigm doctor          # read-only health check with repair hints
+paradigm doctor --fix    # rebuild safe indexes/mirrors; add --warm for embeddings
+paradigm diff a.brain b.brain
+paradigm snapshots       # list automatic safety snapshots
+paradigm rollback backup.brain
+paradigm restore backup.brain --item item.id
 paradigm serve           # local HTTP/SSE bridge on 127.0.0.1:8765
 paradigm dream           # run consolidation analysis
 paradigm uninstall       # unregister MCP clients, keep ~/.paradigm
@@ -98,7 +105,13 @@ paradigm uninstall       # unregister MCP clients, keep ~/.paradigm
 | `memory_update_check` | read-only npm version check | no |
 | `memory_self_update` | gated npm update of fixed Paradigm packages, disabled by default | no unless enabled |
 | `memory_search` | cognitive-map activation + hybrid retrieval + context pack | no |
-| `memory_tree` | full map for inspectors / Studio | no |
+| `memory_doctor` | read-only health check with repair hints | no |
+| `memory_doctor_fix` | safe self-healing: rebuild FTS, refresh JSON mirrors, optionally warm embeddings | write |
+| `memory_stats` | counts, top nodes, storage and freshness stats | no |
+| `memory_mutations` | recent audited mutations for inspectors | no |
+| `memory_snapshots` | automatic safety snapshots under `<memory-dir>/snapshots/` | no |
+| `memory_warm` | warm local embedding cache for nodes and active items | no |
+| `memory_tree` | full map for inspectors / desktop app | no |
 | `memory_read` | node, children, optional active/proposed items | no |
 | `memory_propose_write` | stage an item for review | propose |
 | `memory_write` | trusted direct active write | write |
@@ -108,6 +121,9 @@ paradigm uninstall       # unregister MCP clients, keep ~/.paradigm
 | `memory_create_node` | create a cognitive-map branch | create_node |
 | `memory_export` | export versioned .brain snapshot | no |
 | `memory_import` | import .brain snapshot | import |
+| `memory_snapshot_diff` | compare two .brain snapshots | no |
+| `memory_snapshot_restore` | restore selected nodes/items from a snapshot after auto-snapshotting current state | import |
+| `memory_feedback` | record useful/ignored retrieval feedback and bounded quality tuning | update |
 | `memory_import_markdown` | import inline Markdown/Obsidian content into a node | write/propose |
 | `memory_dream` | duplicate/stale/overloaded/orphan suggestions | no |
 
@@ -116,6 +132,13 @@ Every tool accepts `workspace?: string` for one MCP process serving many project
 Destructive operations are guarded: `memory_delete` and `memory_import` with
 `mode: "replace"` create an automatic `.brain` snapshot under
 `<memory-dir>/snapshots/` before changing state.
+
+Release helpers:
+
+```bash
+npm run release:check       # validate package versions and manifest consistency
+npm run release:manifests   # after npm publish, fill Homebrew/Scoop SHA-256
+```
 
 ## Client setup
 
@@ -183,7 +206,7 @@ Do not dump unrelated memory into the context window.
 Agent -> MCP stdio -> @paradigm-memory/memory-mcp -> @paradigm-memory/memory-core -> SQLite + tree.json
                          |                         |
                          |                         + FTS5, embeddings cache, audit log
-                         + Memory Studio uses the same MCP sidecar
+                         + Paradigm Memory uses the same MCP sidecar
 ```
 
 ## HTTP bridge
@@ -208,7 +231,7 @@ Self-update is intentionally off by default. To allow an agent to call
 
 ```bash
 paradigm          # preferred
-npm run studio:dev
+npm run app:dev
 ```
 
 Studio is a human inspector: map, graph, search, review queue, audit timeline, export/import, dream. It is not a chat UI.
@@ -216,7 +239,7 @@ Studio is a human inspector: map, graph, search, review queue, audit timeline, e
 ## Requirements
 
 - Node.js 22+ for native `node:sqlite`.
-- Optional: `PARADIGM_MEMORY_EMBEDDINGS=wasm` for local ONNX embeddings via `@xenova/transformers`.
+- Optional: `PARADIGM_MEMORY_EMBEDDINGS=wasm` for local ONNX embeddings via `@huggingface/transformers`.
 - Optional: `PARADIGM_MEMORY_EMBEDDINGS=ollama` with `nomic-embed-text`.
 
 ## Verify
@@ -225,7 +248,7 @@ Studio is a human inspector: map, graph, search, review queue, audit timeline, e
 npm test
 npm run lint
 npm run eval:memory
-npm run studio:build
+npm run app:build
 npm run test:coverage
 ```
 

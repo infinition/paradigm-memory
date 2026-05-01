@@ -220,6 +220,7 @@ test("memory_export and memory_import round-trip a workspace", async () => {
 
     const exported = await service.exportMemory({ workspace: "source", include_mutations: true });
     assert.equal(exported.format, "paradigm.brain");
+    assert.match(exported.sha256, /^[a-f0-9]{64}$/);
     assert.ok(exported.snapshot.items.some((item) => item.content.includes(marker)));
 
     const imported = await service.importMemory({
@@ -254,6 +255,112 @@ test("memory_dream detects near-duplicate items", async () => {
     assert.ok(report.summary.duplicates > 0);
     assert.ok(report.summary.total > 0);
   });
+});
+
+test("memory_doctor reports actionable health checks", async () => {
+  await withService("doctor", async (service) => {
+    const report = await service.doctor({});
+    assert.equal(typeof report.score, "number");
+    assert.ok(report.checks.some((check) => check.id === "sqlite_wal"));
+    assert.ok(report.checks.some((check) => check.id === "sqlite_busy_timeout"));
+  });
+});
+
+test("memory_doctor_fix applies safe repairs without deleting content", async () => {
+  await withService("doctor-fix", async (service) => {
+    const before = await service.read({ node_id: "projects.paradigm.memory", include_items: true });
+    const result = await service.doctorFix({ repairs: ["rebuild_fts", "mirror_json"] });
+    const after = await service.read({ node_id: "projects.paradigm.memory", include_items: true });
+
+    assert.deepEqual(result.applied, ["rebuild_fts", "mirror_json"]);
+    assert.equal(result.after.checks.some((check) => check.id === "sqlite_wal"), true);
+    assert.equal(after.items.length, before.items.length);
+  });
+});
+
+test("memory_stats and memory_snapshot_diff report workspace changes", async () => {
+  await withService("stats-diff", async (service) => {
+    const before = await service.exportMemory({});
+    await service.write({
+      node_id: "projects.paradigm.memory",
+      content: "Snapshot diff marker item.",
+      tags: ["diff"]
+    });
+    const after = await service.exportMemory({});
+    const stats = await service.stats({});
+    assert.ok(stats.counts.nodes > 0);
+    assert.ok(stats.counts.active_items > 0);
+
+    const diff = await service.snapshotDiff({ left: before.snapshot, right: after.snapshot });
+    assert.equal(diff.summary.items_added, 1);
+  });
+});
+
+test("memory_snapshot_restore restores selected items from a snapshot", async () => {
+  await withService("snapshot-restore", async (service) => {
+    const written = await service.write({
+      node_id: "projects.paradigm.memory",
+      content: "Snapshot restore original content.",
+      tags: ["restore"]
+    });
+    const snapshot = await service.exportMemory({ include_deleted: true });
+    await service.updateItem({
+      item_id: written.item.id,
+      content: "Snapshot restore mutated content.",
+      tags: ["restore"]
+    });
+
+    const restored = await service.snapshotRestore({
+      source: snapshot.snapshot,
+      item_ids: [written.item.id],
+      reason: "restore_test"
+    });
+    assert.equal(restored.item_count, 1);
+
+    const read = await service.read({ node_id: "projects.paradigm.memory", include_items: true });
+    const item = read.items.find((candidate) => candidate.id === written.item.id);
+    assert.match(item.content, /original content/);
+  });
+});
+
+test("memory_feedback adjusts item quality signals in bounded steps", async () => {
+  await withService("feedback", async (service) => {
+    const written = await service.write({
+      node_id: "projects.paradigm.memory",
+      content: "Feedback-adjusted memory quality signal.",
+      importance: 0.5,
+      confidence: 0.5
+    });
+    const useful = await service.feedback({ item_id: written.item.id, signal: "useful" });
+    assert.ok(useful.item.importance > written.item.importance);
+    assert.ok(useful.item.tags.includes("feedback:useful"));
+
+    const ignored = await service.feedback({ item_id: written.item.id, signal: "ignored" });
+    assert.ok(ignored.item.importance < useful.item.importance);
+    assert.ok(ignored.item.tags.includes("feedback:ignored"));
+  });
+});
+
+test("concurrent SQLite writers share one data dir without lock failures", async () => {
+  const dataDir = await createTempDataDir("concurrency");
+  const services = await Promise.all(Array.from({ length: 4 }, () => createMemoryService({ dataDir })));
+  try {
+    const marker = `concurrency-${Date.now()}`;
+    await Promise.all(services.flatMap((service, serviceIndex) =>
+      Array.from({ length: 5 }, (_, itemIndex) => service.write({
+        node_id: "projects.paradigm.memory",
+        content: `${marker} writer ${serviceIndex} item ${itemIndex}`,
+        tags: ["concurrency"]
+      }))
+    ));
+
+    const result = await services[0].search({ query: marker, limit: 50 });
+    assert.equal(result.evidence.filter((item) => item.content.includes(marker)).length, 20);
+  } finally {
+    for (const service of services) service.close();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    await cleanupTempDataDir(dataDir);
+  }
 });
 
 test("memory_import_markdown chunks markdown into audited items", async () => {
@@ -292,6 +399,14 @@ test("memory_delete and replace import create safety snapshots", async () => {
     const imported = await service.importMemory({ data: exported.snapshot, mode: "replace", reason: "snapshot_replace" });
     assert.ok(imported.snapshot_path.startsWith(dataDir));
     assert.match(imported.snapshot_path, /before-import-replace/);
+
+    const snapshots = await service.snapshots({ limit: 10 });
+    assert.ok(snapshots.snapshots.some((snapshot) => snapshot.path === deleted.snapshot_path));
+    assert.ok(snapshots.snapshots.some((snapshot) => snapshot.path === imported.snapshot_path));
+
+    const mutations = await service.mutations({ limit: 10 });
+    assert.ok(mutations.mutations.some((mutation) => mutation.operation === "delete"));
+    assert.ok(mutations.mutations.some((mutation) => mutation.operation === "import"));
   });
 });
 

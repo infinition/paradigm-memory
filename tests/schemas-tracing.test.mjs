@@ -32,6 +32,7 @@ test("memory service writes a JSON trace for search", async () => {
     assert.equal(trace.operation, "mcp.memory.search");
     assert.equal(trace.steps.intent, "memory_architecture");
     assert.ok(Array.isArray(trace.steps.activation));
+    assert.ok(Array.isArray(trace.steps.retrieval));
   } finally {
     service.close();
     await cleanupTempDataDir(dataDir);

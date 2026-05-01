@@ -32,7 +32,7 @@ const workspaceProperty = {
 export const toolDefinitions = [
   {
     name: "memory_version",
-    description: "Return server version, protocol version, active data directory, workspace directory, and storage stats. Useful for sanity checks and Studio diagnostics.",
+    description: "Return server version, protocol version, active data directory, workspace directory, and storage stats. Useful for sanity checks and Memory inspector diagnostics.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -107,6 +107,69 @@ export const toolDefinitions = [
       properties: {
         include_items: { type: "boolean" },
         include_proposed: { type: "boolean" },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_doctor",
+    description: "Run a read-only health check over the memory store: SQLite pragmas, orphan items, broken node links, embedding cache coverage and actionable repair hints.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_doctor_fix",
+    description: "Apply safe local repairs: rebuild FTS indexes, refresh JSON mirrors from SQLite, and optionally warm embeddings. Does not delete content.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        repairs: {
+          type: "array",
+          items: { type: "string", enum: ["rebuild_fts", "mirror_json", "warm_embeddings"] }
+        },
+        dry_run: { type: "boolean" },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_stats",
+    description: "Return read-only memory statistics: counts, top nodes, freshness histogram inputs, storage size and mutation count.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_mutations",
+    description: "List recent audited mutations for the current workspace.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        limit: { type: "integer", minimum: 1, maximum: 1000 },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_snapshots",
+    description: "List automatic .brain safety snapshots under <memory-dir>/snapshots/.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        limit: { type: "integer", minimum: 1, maximum: 200 },
+        include_hash: { type: "boolean" },
         workspace: workspaceProperty
       }
     }
@@ -251,6 +314,52 @@ export const toolDefinitions = [
     }
   },
   {
+    name: "memory_snapshot_diff",
+    description: "Compare two paradigm.brain snapshots by node and item id. Accepts inline snapshots or absolute file paths.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        left_path: { type: "string" },
+        right_path: { type: "string" },
+        left: { type: "object" },
+        right: { type: "object" },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_snapshot_restore",
+    description: "Restore selected nodes and/or items from a paradigm.brain snapshot using a safe merge. Creates a safety snapshot first.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        source_path: { type: "string" },
+        source: { type: "object" },
+        item_ids: { type: "array", items: { type: "string", minLength: 1 } },
+        node_ids: { type: "array", items: { type: "string", minLength: 1 } },
+        reason: { type: "string" },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
+    name: "memory_feedback",
+    description: "Record retrieval feedback for an item and apply a bounded importance/confidence adjustment.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["item_id", "signal"],
+      properties: {
+        item_id: { type: "string", minLength: 1 },
+        signal: { type: "string", enum: ["useful", "ignored"] },
+        reason: { type: "string" },
+        workspace: workspaceProperty
+      }
+    }
+  },
+  {
     name: "memory_update_item",
     description: "Update an existing memory item's content or tags. Audited.",
     inputSchema: {
@@ -298,6 +407,17 @@ export const toolDefinitions = [
         workspace: workspaceProperty
       }
     }
+  },
+  {
+    name: "memory_warm",
+    description: "Warm the local embedding cache for current nodes and active items. No-op when embeddings are disabled.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        workspace: workspaceProperty
+      }
+    }
   }
 ];
 
@@ -339,6 +459,11 @@ export async function callTool(service, name, args) {
   if (name === "memory_search") return service.search(args ?? {});
   if (name === "memory_read") return service.read(args ?? {});
   if (name === "memory_tree") return service.tree(args ?? {});
+  if (name === "memory_doctor") return service.doctor(args ?? {});
+  if (name === "memory_doctor_fix") return service.doctorFix(args ?? {});
+  if (name === "memory_stats") return service.stats(args ?? {});
+  if (name === "memory_mutations") return service.mutations(args ?? {});
+  if (name === "memory_snapshots") return service.snapshots(args ?? {});
   if (name === "memory_propose_write") return service.proposeWrite(args ?? {});
   if (name === "memory_write") return service.write(args ?? {});
   if (name === "memory_review") return service.review(args ?? {});
@@ -348,8 +473,12 @@ export async function callTool(service, name, args) {
   if (name === "memory_create_node") return service.createNode(args ?? {});
   if (name === "memory_export") return service.exportMemory(args ?? {});
   if (name === "memory_import") return service.importMemory(args ?? {});
+  if (name === "memory_snapshot_diff") return service.snapshotDiff(args ?? {});
+  if (name === "memory_snapshot_restore") return service.snapshotRestore(args ?? {});
+  if (name === "memory_feedback") return service.feedback(args ?? {});
   if (name === "memory_import_markdown") return service.importMarkdown(args ?? {});
   if (name === "memory_dream") return service.dream(args ?? {});
+  if (name === "memory_warm") return service.warm(args ?? {});
   const error = new Error(`Unknown tool: ${name}`);
   error.code = "unknown_tool";
   throw error;

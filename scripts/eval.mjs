@@ -45,7 +45,10 @@ function recall(found, expected) {
 
 async function createEvalDataDir() {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "paradigm-eval-memory-"));
-  await cp(path.join(rootDir, "data", "memory"), path.join(dataDir, "memory"), {
+  const sourceMemoryDir = process.env.PARADIGM_EVAL_MEMORY_DIR
+    ? path.resolve(process.env.PARADIGM_EVAL_MEMORY_DIR)
+    : path.join(rootDir, "tests", "fixtures", "memory");
+  await cp(sourceMemoryDir, path.join(dataDir, "memory"), {
     recursive: true,
     filter: (source) => !source.endsWith(".sqlite") && !source.endsWith(".sqlite-shm") && !source.endsWith(".sqlite-wal")
   });

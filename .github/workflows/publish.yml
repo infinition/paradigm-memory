@@ -23,6 +23,7 @@ jobs:
       - run: npm test
         env:
           PARADIGM_MEMORY_AUTOWARM: '0'
+      - run: npm run release:check
       - name: Publish to NPM
         run: |
           npm publish --workspace @paradigm-memory/memory-core --provenance --access public

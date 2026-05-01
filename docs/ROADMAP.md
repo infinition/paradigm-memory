@@ -13,11 +13,11 @@ itself is the contract.
 The diamond: a local-first, audited, MCP-native cognitive memory.
 
 ### Latest Improvements (2026-04-30)
-- ✅ **Granular Dream Choice**: Users can now choose exactly which item to keep (A or B) during deduplication in Studio, with side-by-side content comparison.
+- ✅ **Granular Dream Choice**: Users can now choose exactly which item to keep (A or B) during deduplication in the desktop app, with side-by-side content comparison.
 - ✅ **Robust Search (Lexical Boost)**: Added a lexical scoring boost in `atlas.mjs` to ensure exact keyword matches (e.g., "pizza") are never filtered out by semantic thresholds.
 - ✅ **Native Tauri Export**: Fixed export/import functionality by integrating native file dialogs and direct filesystem access, bypassing browser-based limitations.
 - ✅ **Documentation Cleanup**: Unified all documentation in English and aligned terminology with the functional architecture.
-- ✅ **Studio Overhaul**: Premium dark theme (Inter font, glassmorphism), global toast notifications, Settings panel (MCP setup, env vars, system info), node creation dialog, sidebar real-time filter synced with graph, MiniMap, keyword badges.
+- ✅ **Desktop app overhaul**: Premium dark theme (Inter font, glassmorphism), global toast notifications, Settings panel (MCP setup, env vars, system info), node creation dialog, sidebar real-time filter synced with graph, MiniMap, keyword badges.
 
 ### Core engine — `@paradigm-memory/memory-core`
 - ✅ Cognitive map model (`tree.json` + nodes with `id, label, summary, keywords, importance, freshness, confidence, retrieval_policy`).
@@ -26,7 +26,7 @@ The diamond: a local-first, audited, MCP-native cognitive memory.
 - ✅ Hybrid retrieval: lexical (FTS5 + prefix-stem) + semantic (cosine on cached vectors).
 - ✅ Activation gating with three states: open (≥0.75), latent (≥0.45), ignored (<0.25).
 - ✅ Raw activation ranking (uncapped) so leaf nodes can win over parents.
-- ✅ Embedding providers: `ollama`, `wasm` (`@xenova/transformers`, optional dep),
+- ✅ Embedding providers: `ollama`, `wasm` (`@huggingface/transformers`, optional dep),
   `keyword` (deterministic test fallback), `off`.
 - ✅ Embedding registry (`embedding-registry.mjs`) — recommended models per
   language with size / quality / notes (`off`, `wasm-minilm`, `ollama-nomic`,
@@ -60,7 +60,7 @@ The diamond: a local-first, audited, MCP-native cognitive memory.
 - ✅ HTTP/SSE bridge (`http-server.mjs`) with `/health`, `/api/version`,
   `/api/tools`, `/mcp` (JSON-RPC), `/sse`. Loopback by default; non-loopback
   binds require `PARADIGM_HTTP_TOKEN` Bearer auth.
-- ✅ 16 tools, all snake_case, all audited where they mutate state.
+- ✅ 24 tools, all snake_case, all audited where they mutate state.
 - ✅ Workspace pool: every tool accepts `workspace?: string`. One process serves
   N projects under `<dataDir>/workspaces/<workspace>/memory/`.
 - ✅ Zod-validated inputs; structured error responses (`invalid_input`,
@@ -75,6 +75,9 @@ The diamond: a local-first, audited, MCP-native cognitive memory.
 | `memory_update_check` | --- |
 | `memory_self_update` | guarded package update |
 | `memory_search` | — |
+| `memory_doctor` | — |
+| `memory_doctor_fix` | safe repair |
+| `memory_stats` | — |
 | `memory_tree` | — |
 | `memory_read` | — |
 | `memory_propose_write` | `propose` |
@@ -85,12 +88,16 @@ The diamond: a local-first, audited, MCP-native cognitive memory.
 | `memory_create_node` | `create_node` |
 | `memory_export` | — |
 | `memory_import` | `import` (auto-snapshot in `replace` mode) |
+| `memory_snapshot_diff` | — |
+| `memory_snapshot_restore` | `import` (auto-snapshot) |
+| `memory_feedback` | `update` |
 | `memory_import_markdown` | `write` / `propose` |
 | `memory_dream` | — |
+| `memory_warm` | — |
 
 ### CLI — `@paradigm-memory/memory-cli`
 - ✅ Cross-platform `paradigm` binary (Node 22+).
-- ✅ `paradigm studio` — launches Memory Studio from a source checkout.
+- ✅ `paradigm studio` — launches the Paradigm Memory desktop app from a source checkout.
 - ✅ `paradigm update` — `npm install` (repo) or `npm update -g` (installed).
 - ✅ `paradigm uninstall` — unregisters `claude` / `codex` / `gemini` MCP entries;
   keeps memory unless `--purge-memory` is confirmed by typing `DELETE`.
@@ -138,11 +145,48 @@ The diamond: a local-first, audited, MCP-native cognitive memory.
 
 Non-breaking additions and quality improvements before v0.2.
 
+### Killer feature candidates
+- ✅ **Explainable retrieval ("why this memory?")** — `memory_search` now returns
+  a compact `debug.why` block with activation reasons, evidence scores, FTS
+  contribution, node activation and semantic errors.  the desktop app should surface this
+  as a readable trace panel instead of making retrieval feel magical.
+- ✅ **Serious memory doctor** — `memory_doctor` / `paradigm doctor` now reports
+  SQLite WAL/busy-timeout status, orphan items, broken child links, embedding
+  cache coverage, a health score and actionable repair hints.
+- ✅ **Safe doctor auto-fix** — `memory_doctor_fix`, `paradigm doctor --fix`,
+  and the desktop app Health tab can rebuild FTS, refresh JSON mirrors from SQLite, and
+  optionally warm embeddings without deleting content.
+- ✅ **Signed-ish portable exports** — `memory_export` now returns a deterministic
+  SHA-256 over the emitted `.brain` payload. Next step: store and verify this
+  hash in desktop app import/diff flows.
+- ✅ **Snapshot diff plumbing** — `memory_snapshot_diff` and `paradigm diff`
+  compare two `.brain` files by node and item id. `paradigm rollback` wraps
+  replace-import with an explicit confirmation prompt.
+- ✅ **Workspace stats** — `memory_stats` and `paradigm stats` expose storage,
+  counts, top nodes and freshness numbers for desktop app / CLI inspectors.
+- ✅ **SQLite reliability baseline** — every store connection sets WAL and a
+  `busy_timeout`, and the doctor exposes both so Windows lock problems are
+  visible before they become mysterious failures.
+- ✅ **SQLite as source of truth** — `tree.json`/`items.json` seed the first boot,
+  then SQLite is re-hydrated back into runtime state and mirrored out to JSON
+  for debug/compatibility.
+- ✅ **Usage-weighted memory quality** — `memory_feedback` and desktop app search
+  buttons record useful/ignored evidence and apply bounded importance/confidence
+  tuning with an audited update.
+- ✅ **Snapshot partial rollback** — `memory_snapshot_restore`,
+  `paradigm restore`, and the desktop app Health tab restore selected item/node ids from a
+  `.brain` snapshot after first writing a safety snapshot.
+- ⬜ **Project/git branch-aware workspaces** — intentionally deferred for now.
+  Later, derive workspace identity from repo/remotes/branch and maintain durable
+  per-project summaries without making the default user memory noisy.
+
 ### Code quality
 - ✅ Smoke tests cover the expanded MCP surface (version/update diagnostics,
   Markdown import, HTTP bridge in `tests/memory-http.test.mjs`).
 - ✅ Service tests cover `memory_export`, `memory_import`, workspace isolation,
   snapshots, Markdown import, `memory_dream`.
+- ✅ SQLite concurrency regression opens multiple service connections against
+  one data dir and expects no writer lock failures.
 - ✅ `npm run test:coverage` wired into CI.
 - ⬜ Migrate JSDoc on all public APIs.
 
@@ -150,11 +194,16 @@ Non-breaking additions and quality improvements before v0.2.
 - 🟡 Document and fix the Windows env-var trap (`KEY=VALUE node ...` doesn't
   propagate via Git Bash on Windows; PowerShell `$env:` is the reliable path).
 - ✅ npm-publish workflow as GitHub Action (release on tag `v*.*.*`).
-- 🟡 Homebrew formula (`packaging/homebrew/paradigm-memory.rb`) — needs npm
-  tarball SHA after first publish.
-- 🟡 Scoop manifest (`packaging/scoop/paradigm-memory.json`) — same.
-- ⬜ Bundle the MCP sidecar inside the Tauri binary so Studio releases ship
-  without a Node prerequisite (`bundle.externalBin`).
+- ✅ Homebrew/Scoop manifest updater — `npm run release:manifests` fetches the
+  published npm tarball and writes the SHA-256 into `packaging/homebrew` and
+  `packaging/scoop`. Before publish, `npm run release:check` validates versions
+  and warns about placeholder hashes.
+- ✅  the desktop app release workflow — `.github/workflows/studio-release.yml` (builds the desktop app) builds
+  Tauri bundles on Windows, macOS and Linux for tags or manual dispatch.
+- 🟡 Fully bundled MCP sidecar —  the desktop app now prefers a packaged
+  `paradigm-memory-mcp(.exe)` beside the app/resources and falls back to source
+  checkout or global npm. Remaining work: ship a real native sidecar artifact
+  per OS so releases need no Node runtime.
 
 ### Self-healing / self-update
 - ✅ `memory_self_update` — disabled by default; enabling requires
@@ -178,11 +227,14 @@ Non-breaking additions and quality improvements before v0.2.
 - ⬜ Auto re-embed on `cached_text != current_text` (idempotent diff pass).
 
 ### Concurrency & reliability
-- 🟡 **SQLite lock audit** — confirm WAL + `busy_timeout` is set on every
+- ✅ **SQLite lock audit** — confirm WAL + `busy_timeout` is set on every
   connection (CLI, MCP stdio, HTTP bridge, scripts). Add a regression test
   that opens N concurrent writers and expects no `SQLITE_BUSY`. Vigilance
-  point flagged on Windows where multiple `paradigm` invocations + Studio
+  point flagged on Windows where multiple `paradigm` invocations + desktop app
   sidecar + custom maintenance scripts can race. See `docs/OPERATIONS.md` § 3.3.
+- ✅ Desktop app sidecar lifecycle — Tauri now keeps the MCP child handle, exposes
+  `mcp_status`, and kills the sidecar on app shutdown instead of leaking the
+  process.
 - ⬜ Optional advisory lockfile (`<memory-dir>/.lock`) when running
   destructive maintenance scripts so the MCP refuses to start meanwhile.
 
@@ -205,7 +257,7 @@ A standalone desktop app for users to physically *see* and *touch* their memory.
 The shell is Rust (Tauri); the UI is web (React + react-flow); the backend is
 the existing `paradigm-memory-mcp` running as a sidecar.
 
-The MVP scaffold landed and is buildable (`npm run studio:build`,
+The MVP scaffold landed and is buildable (`npm run app:build`,
 `cargo check`). All MVP features in the list below are implemented. Remaining
 v0.2 work is bundle hardening, packaging, signed releases, and the bonus list.
 
@@ -220,7 +272,7 @@ Paradigm Memory (Tauri shell, Rust)
 ### MVP features
 - ✅ **Tauri + React scaffold** — Rust shell, Vite, React, react-flow, sidecar
   bridge to `paradigm-memory-mcp`.
-- ✅ **Direct tree catalog** — Studio uses `memory_tree`, so a fresh profile no
+- ✅ **Direct tree catalog** —  the desktop app uses `memory_tree`, so a fresh profile no
   longer appears empty just because search has not activated anything yet.
 - ✅ **Tree view (left)** — hierarchical, expand/collapse, badge per node showing
   active item count, status colour, freshness decay.
@@ -238,9 +290,9 @@ Paradigm Memory (Tauri shell, Rust)
   scores; clicking an item highlights it on the graph.
 - ✅ **Workspace switcher** — top bar input to swap between workspaces under
   the current dataDir.
-- ✅ **Data-dir diagnostics** — Studio displays the active memory path and
+- ✅ **Data-dir diagnostics** —  the desktop app displays the active memory path and
   auto-detects repo-local `data/` in dev mode before falling back to `~/.paradigm`.
-- ✅ **Update banner** — Studio calls `memory_update_check` and shows a
+- ✅ **Update banner** —  the desktop app calls `memory_update_check` and shows a
   non-intrusive badge when a newer package exists.
 - ⬜ **Update now button** — gated by signed release verification / explicit
   confirmation; never touches user memory data.
@@ -256,14 +308,18 @@ Paradigm Memory (Tauri shell, Rust)
   (post-import-merge).
 - ✅ **Run dream interactively** — open the consolidator suggestions panel,
   preview each proposal, accept / reject with granular A/B choice.
-- 🟡 **Memory snapshots** — auto-snapshot to `<memory-dir>/snapshots/<date>.brain`
-  is implemented for `memory_delete` and `memory_import:replace`. Still missing:
-  one-click rollback UI, retention policy, cron snapshots.
+- ✅ **Memory snapshots** — auto-snapshot to `<memory-dir>/snapshots/<date>.brain`
+  is implemented for destructive operations; the desktop app Health tab lists snapshots,
+  compares them, restores selected items, and can full-rollback with
+  confirmation. Remaining: retention policy and scheduled snapshots.
+- ✅ **Operational auto-refresh** —  the desktop app can auto-refresh map/proposals/health,
+  shows last refresh time and sidecar runtime details, and Audit has its own
+  live refresh/filter controls.
 - ⬜ **Live trace tail** — follow `data/traces/*.json` to debug activation in real time.
 
-### Non-goals (kept out of Studio)
-- No chat UI. The MCP serves agents; Studio serves humans operating the memory.
-- No model inference (Studio doesn't run LLMs; the optional reasoner runs in
+### Non-goals (kept out of the desktop app)
+- No chat UI. The MCP serves agents; the desktop app serves humans operating the memory.
+- No model inference (the desktop app doesn't run LLMs; the optional reasoner runs in
   the MCP/CLI process).
 
 ### Distribution
@@ -284,24 +340,24 @@ work in v0.3.
   silent). Solves the "memory invisible because the parent has no matching
   keyword" failure mode.
 - ⬜ **Hashtag engine** — extract `#tag` tokens from item content and merge
-  them into `item.tags` on write. Editable in the Studio item editor.
+  them into `item.tags` on write. Editable in the desktop app item editor.
 - ⬜ **Obsidian-style links** — recognise `[[node.id]]` and `[[Node Label]]`
   inside item content; store as outgoing links on the item; surface them as
-  clickable graph edges in Studio.
+  clickable graph edges in the desktop app.
 - ⬜ **Bidirectional backlinks** — for every link, expose a reverse "linked-from"
   list when reading a node.
 - ⬜ **Inline templates** — `paradigm template <name>` to seed common branches
   (`projects.<name>`, `people.<name>`, `decisions.<area>`).
 
 ### Inspectability
-- ⬜ **Memory health command** — `paradigm doctor`: checks for items without
+- ✅ **Memory health command** — `paradigm doctor`: checks for items without
   embeddings, broken parent links, FTS rows out of sync, orphan mutations;
   fixes what is safe, reports the rest.
-- ⬜ **`paradigm stats`** — per-workspace counts, size on disk, top-talking
+- ✅ **`paradigm stats`** — per-workspace counts, size on disk, top-talking
   nodes, freshness histogram.
 - ⬜ **HTTP `/api/stats`** mirroring the CLI command.
 
-### Studio polish
+### Desktop app polish
 - ⬜ Drag-to-reparent nodes on the graph, with a confirmation diff and a
   `move_node` mutation type.
 - ⬜ Multi-select items + bulk delete / bulk re-tag / bulk move.
@@ -319,7 +375,7 @@ When two agents (or one agent + one human) work in the same memory.
 - ⬜ Per-actor activity dashboard.
 - ⬜ Optional remote sync (push/pull `.brain` over a private bucket;
   no centralised cloud, just object storage).
-- ⬜ Signed mutations (every actor has an opaque key; Studio can filter "show
+- ⬜ Signed mutations (every actor has an opaque key; the desktop app can filter "show
   only mutations from actor X").
 
 ---

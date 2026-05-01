@@ -6,7 +6,7 @@
 # - Bootstraps an empty memory under ./.paradigm if none exists.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/Infinition/paradigm-memory/master/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash
 #   ./scripts/install.sh                # local
 #   PARADIGM_MEMORY_DIR=./.paradigm ./scripts/install.sh
 

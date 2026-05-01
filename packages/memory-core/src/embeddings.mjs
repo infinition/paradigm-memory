@@ -74,7 +74,7 @@ export function createKeywordEmbeddingProvider({ model = "keyword-test", dimensi
 }
 
 /**
- * In-process WASM embeddings via @xenova/transformers (ONNX Runtime).
+ * In-process WASM embeddings via @huggingface/transformers (ONNX Runtime).
  * Lazily imported so the package keeps working when the optional dep is absent.
  */
 export function createWasmEmbeddingProvider({

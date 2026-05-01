@@ -1,7 +1,7 @@
 {
   "version": "0.1.0",
   "description": "Local-first navigable memory MCP for coding agents.",
-  "homepage": "https://github.com/Infinition/paradigm-memory",
+  "homepage": "https://github.com/infinition/paradigm-memory",
   "license": "Apache-2.0",
   "depends": "nodejs22",
   "url": "https://registry.npmjs.org/@paradigm-memory/memory-cli/-/memory-cli-0.1.0.tgz",

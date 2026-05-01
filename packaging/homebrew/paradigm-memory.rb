@@ -1,6 +1,6 @@
 class ParadigmMemory < Formula
   desc "Local-first navigable memory MCP for coding agents"
-  homepage "https://github.com/Infinition/paradigm-memory"
+  homepage "https://github.com/infinition/paradigm-memory"
   url "https://registry.npmjs.org/@paradigm-memory/memory-cli/-/memory-cli-0.1.0.tgz"
   sha256 "REPLACE_WITH_NPM_TARBALL_SHA256"
   license "Apache-2.0"

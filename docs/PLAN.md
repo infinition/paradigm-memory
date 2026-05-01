@@ -93,7 +93,7 @@ Target Vision: Paradigm is a persistent, navigable, and audited cognitive substr
 - Append-only hash chain for audit logs.
 
 ### P5.2 - Distribution
-- [Done] Packages: `@paradigm-memory/memory-core`, `@paradigm-memory/memory-mcp`, `@paradigm-memory/memory-studio`.
+- [Done] Packages: `@paradigm-memory/memory-core`, `@paradigm-memory/memory-mcp`, `@paradigm-memory/memory`.
 - [Done] Compiled binaries for Studio.
 
 ---

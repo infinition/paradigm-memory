@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { MemoryNode, MemoryItem, MemoryMutation, SearchResult, TreeResult, UpdateCheckResult, VersionResult } from "./types";
+import type { DoctorFixResult, DoctorResult, McpRuntimeStatus, MemoryNode, MemoryItem, MemoryMutation, SearchResult, SnapshotDiffResult, SnapshotListResult, TreeResult, UpdateCheckResult, VersionResult } from "./types";
 
 /**
  * Wraps the Tauri command `mcp_call` which forwards to the
@@ -37,12 +37,38 @@ export const mcp = {
     return await rawCall("tools/list", {});
   },
 
+  runtimeStatus(): Promise<McpRuntimeStatus> {
+    return invoke("mcp_status", {});
+  },
+
   version(workspace?: string): Promise<VersionResult> {
     return callTool("memory_version", workspace ? { workspace } : {});
   },
 
   updateCheck(workspace?: string): Promise<UpdateCheckResult> {
     return callTool("memory_update_check", workspace ? { workspace, timeout_ms: 1200 } : { timeout_ms: 1200 });
+  },
+
+  doctor(workspace?: string): Promise<DoctorResult> {
+    return callTool("memory_doctor", workspace ? { workspace } : {});
+  },
+
+  mutations(workspace?: string, limit = 200): Promise<{ count: number; mutations: MemoryMutation[] }> {
+    return callTool("memory_mutations", workspace ? { workspace, limit } : { limit });
+  },
+
+  snapshots(workspace?: string, limit = 50): Promise<SnapshotListResult> {
+    return callTool("memory_snapshots", workspace ? { workspace, limit } : { limit });
+  },
+
+  doctorFix(workspace?: string, warm = false): Promise<DoctorFixResult> {
+    const args: Record<string, unknown> = workspace ? { workspace } : {};
+    if (warm) args.repairs = ["rebuild_fts", "mirror_json", "warm_embeddings"];
+    return callTool("memory_doctor_fix", args);
+  },
+
+  warm(workspace?: string): Promise<any> {
+    return callTool("memory_warm", workspace ? { workspace } : {});
   },
 
   search(query: string, workspace?: string, limit = 10): Promise<SearchResult> {
@@ -95,6 +121,18 @@ export const mcp = {
 
   importSnapshot(args: { input_path?: string; data?: any; mode?: "merge" | "replace"; workspace?: string }): Promise<any> {
     return callTool("memory_import", args);
+  },
+
+  snapshotDiff(args: { left?: any; right?: any; left_path?: string; right_path?: string; workspace?: string }): Promise<SnapshotDiffResult> {
+    return callTool("memory_snapshot_diff", args);
+  },
+
+  snapshotRestore(args: { source?: any; source_path?: string; item_ids?: string[]; node_ids?: string[]; reason?: string; workspace?: string }): Promise<any> {
+    return callTool("memory_snapshot_restore", args);
+  },
+
+  feedback(args: { item_id: string; signal: "useful" | "ignored"; reason?: string; workspace?: string }): Promise<{ item: MemoryItem; mutation: MemoryMutation }> {
+    return callTool("memory_feedback", args);
   },
 
   updateItem(args: { item_id: string; content: string; tags?: string[]; workspace?: string }): Promise<{ item: MemoryItem; mutation: MemoryMutation }> {

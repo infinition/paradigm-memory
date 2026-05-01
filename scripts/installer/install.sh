@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # paradigm-memory one-liner installer (Linux / macOS).
 #
-#   curl -fsSL https://raw.githubusercontent.com/Infinition/paradigm-memory/main/scripts/installer/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash
 #
 # What it does:
 #   - Verifies Node 22+ and npm.
@@ -19,7 +19,7 @@
 
 set -euo pipefail
 
-REPO="Infinition/paradigm-memory"
+REPO="infinition/paradigm-memory"
 NPM_PKG="@paradigm-memory/memory-cli"
 PARADIGM_MEMORY_DIR="${PARADIGM_MEMORY_DIR:-$HOME/.paradigm}"
 PARADIGM_VERSION="${PARADIGM_VERSION:-}"

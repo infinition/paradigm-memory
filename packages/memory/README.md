@@ -1,10 +1,10 @@
-# @paradigm-memory/memory-studio
+# @paradigm-memory/memory
 
 Desktop inspector for paradigm-memory.
 **Tauri** (Rust shell) + **React** + **react-flow** + **paradigm-memory-mcp** sidecar.
 
-The Studio is the dogfooding client of the MCP server: it talks JSON-RPC over
-stdio exactly the way Claude Code, Cursor, Cline & co do. Anything the Studio
+This desktop app is the dogfooding client of the MCP server: it talks JSON-RPC
+over stdio exactly the way Claude Code, Cursor, Cline & co do. Anything the GUI
 can do, an agent can do.
 
 ## Status
@@ -23,7 +23,7 @@ Prerequisites:
 
 ```bash
 # from the repo root
-cd packages/memory-studio
+cd packages/memory
 npm install                  # installs vite, react, @xyflow/react, @tauri-apps/...
 npm run tauri:dev            # launches the desktop app in dev mode
 ```

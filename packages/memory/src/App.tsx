@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { save, open } from "@tauri-apps/plugin-dialog";
 import { writeTextFile, readTextFile, readDir, mkdir } from "@tauri-apps/plugin-fs";
 import { mcp } from "./lib/mcp";
-import type { MemoryItem, MemoryNode, SearchResult } from "./lib/types";
+import type { DoctorResult, McpRuntimeStatus, MemoryItem, MemoryNode, SearchResult, SnapshotDiffResult, SnapshotListResult } from "./lib/types";
 import { Sidebar } from "./components/Sidebar";
 import { Graph } from "./components/Graph";
 import { ItemEditor } from "./components/ItemEditor";
@@ -13,7 +13,7 @@ import { Settings } from "./components/Settings";
 import { ToastContainer, toast } from "./components/Toast";
 import type { UpdateCheckResult, VersionResult } from "./lib/types";
 
-type Tab = "map" | "review" | "audit" | "dream" | "settings";
+type Tab = "map" | "review" | "audit" | "dream" | "health" | "settings";
 
 interface WorkspaceState {
   nodes: MemoryNode[];
@@ -46,6 +46,14 @@ export default function App() {
   const [newNodeLabel, setNewNodeLabel] = useState("");
   const [newNodeOneLiner, setNewNodeOneLiner] = useState("");
   const [dreamReport, setDreamReport] = useState<any | null>(null);
+  const [doctor, setDoctor] = useState<DoctorResult | null>(null);
+  const [snapshotReview, setSnapshotReview] = useState<{ path: string; source?: any; diff: SnapshotDiffResult } | null>(null);
+  const [snapshots, setSnapshots] = useState<SnapshotListResult | null>(null);
+  const [runtimeStatus, setRuntimeStatus] = useState<McpRuntimeStatus | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [refreshSeconds, setRefreshSeconds] = useState(10);
+  const [lastRefreshAt, setLastRefreshAt] = useState<string | null>(null);
+  const [layoutTrigger, setLayoutTrigger] = useState(0);
 
   const listWorkspaces = useCallback(async (dataDir?: string) => {
     if (!dataDir) return;
@@ -80,8 +88,17 @@ export default function App() {
     mcp.listProposed(workspace).then((proposed) => setProposedCount(proposed.count)).catch(() => setProposedCount(0));
     const v = await mcp.version(workspace);
     setVersion(v);
+    setLastRefreshAt(new Date().toLocaleTimeString());
     if (v.data_dir) listWorkspaces(v.data_dir);
+    mcp.doctor(workspace).then(setDoctor).catch(() => setDoctor(null));
+    mcp.runtimeStatus().then(setRuntimeStatus).catch(() => setRuntimeStatus(null));
   }, [workspace, listWorkspaces]);
+
+  const loadSnapshots = useCallback(async () => {
+    const result = await mcp.snapshots(workspace, 25);
+    setSnapshots(result);
+    return result;
+  }, [workspace]);
 
   useEffect(() => {
     let mounted = true;
@@ -104,6 +121,19 @@ export default function App() {
     })();
     return () => { mounted = false; };
   }, [workspace]); // Only trigger on workspace change, refresh handles initial
+
+  useEffect(() => {
+    if (!autoRefresh || bootError) return;
+    const timer = window.setInterval(() => {
+      refresh().catch((caught) => setMapError(String(caught?.message ?? caught)));
+      if (tab === "health") loadSnapshots().catch(() => {});
+    }, Math.max(3, refreshSeconds) * 1000);
+    return () => window.clearInterval(timer);
+  }, [autoRefresh, bootError, refresh, refreshSeconds, tab, loadSnapshots]);
+
+  useEffect(() => {
+    if (tab === "health") loadSnapshots().catch(() => setSnapshots(null));
+  }, [tab, loadSnapshots]);
 
   const activatedIds = useMemo(() => {
     if (!searchResult) return undefined;
@@ -234,12 +264,93 @@ export default function App() {
     await refresh();
   }, [refresh]);
 
+  const runDoctorFix = async (warm = false) => {
+    try {
+      const result = await mcp.doctorFix(workspace, warm);
+      setDoctor(result.after);
+      toast.success("Doctor repaired", `${result.applied.length} safe repair(s) applied`);
+      await refresh();
+    } catch (err: any) {
+      toast.error("Doctor fix failed", err.message);
+    }
+  };
+
+  const reviewSnapshot = async () => {
+    try {
+      const path = await open({
+        multiple: false,
+        filters: [{ name: "Paradigm Brain", extensions: ["brain", "json"] }]
+      });
+      if (!path) return;
+      const source = JSON.parse(await readTextFile(path as string));
+      const current = await mcp.exportSnapshot({ workspace, include_mutations: true });
+      const diff = await mcp.snapshotDiff({ left: current.snapshot, right: source, workspace });
+      setSnapshotReview({ path: path as string, source, diff });
+      toast.info("Snapshot compared", `${diff.summary.items_changed + diff.summary.items_added} restorable item(s)`);
+    } catch (err: any) {
+      toast.error("Snapshot compare failed", err.message);
+    }
+  };
+
+  const compareManagedSnapshot = async (snapshotPath: string) => {
+    try {
+      const current = await mcp.exportSnapshot({ workspace, include_mutations: true });
+      const diff = await mcp.snapshotDiff({ left: current.snapshot, right_path: snapshotPath, workspace });
+      setSnapshotReview({ path: snapshotPath, diff });
+      toast.info("Snapshot compared", `${diff.summary.items_changed + diff.summary.items_added} restorable item(s)`);
+    } catch (err: any) {
+      toast.error("Snapshot compare failed", err.message);
+    }
+  };
+
+  const restoreSnapshotItems = async (itemIds: string[]) => {
+    if (!snapshotReview || itemIds.length === 0) return;
+    try {
+      await mcp.snapshotRestore({
+        source: snapshotReview.source,
+        source_path: snapshotReview.source ? undefined : snapshotReview.path,
+        item_ids: itemIds,
+        reason: "memory_selective_restore",
+        workspace
+      });
+      toast.success("Snapshot restored", `${itemIds.length} item(s) restored`);
+      await refresh();
+      setSnapshotReview(null);
+      await loadSnapshots();
+    } catch (err: any) {
+      toast.error("Restore failed", err.message);
+    }
+  };
+
+  const rollbackSnapshot = async (snapshotPath: string) => {
+    if (!window.confirm(`Replace ${workspace ?? "default"} memory from this snapshot? A safety snapshot will be created first.`)) return;
+    try {
+      await mcp.importSnapshot({ input_path: snapshotPath, mode: "replace", workspace });
+      toast.success("Rolled back", snapshotPath.split(/[\\/]/).pop());
+      setSnapshotReview(null);
+      await refresh();
+      await loadSnapshots();
+    } catch (err: any) {
+      toast.error("Rollback failed", err.message);
+    }
+  };
+
+  const sendFeedback = async (itemId: string, signal: "useful" | "ignored") => {
+    try {
+      await mcp.feedback({ item_id: itemId, signal, reason: "memory_search_feedback", workspace });
+      toast.success("Feedback saved", signal);
+      await refresh();
+    } catch (err: any) {
+      toast.error("Feedback failed", err.message);
+    }
+  };
+
   return (
     <div className="app">
       <ToastContainer />
 
       <div className="topbar">
-        <h1>Paradigm · Memory</h1>
+        <h1>Paradigm - Memory</h1>
         {tab === "map" ? (
           <SearchBar workspace={workspace} onResult={setSearchResult} />
         ) : <span />}
@@ -259,18 +370,36 @@ export default function App() {
           </form>
           {version && (
             <span className="path-pill" title={version.workspace_dir}>
-              {version.stats?.nodeCount ?? state.nodes.length}n · {version.stats?.itemCount ?? Object.values(itemCounts).reduce((s, c) => s + c, 0)}i
+              {version.stats?.nodeCount ?? state.nodes.length}n / {version.stats?.itemCount ?? Object.values(itemCounts).reduce((s, c) => s + c, 0)}i
             </span>
           )}
+          <button
+            className={`ghost${autoRefresh ? " active" : ""}`}
+            onClick={() => setAutoRefresh(!autoRefresh)}
+            title={`Auto refresh every ${refreshSeconds}s${lastRefreshAt ? `, last ${lastRefreshAt}` : ""}`}
+          >
+            Auto
+          </button>
+          <select
+            className="mini-select"
+            value={refreshSeconds}
+            onChange={(event) => setRefreshSeconds(Number(event.target.value))}
+            title="Auto-refresh interval"
+          >
+            <option value={5}>5s</option>
+            <option value={10}>10s</option>
+            <option value={30}>30s</option>
+            <option value={60}>60s</option>
+          </select>
           {update?.update_available && (
-            <span className="update-badge" title={`${update.current} → ${update.latest}`}>
-              ↑ {update.latest}
+            <span className="update-badge" title={`${update.current} -> ${update.latest}`}>
+              up {update.latest}
             </span>
           )}
-          <button className="ghost" onClick={runDream} disabled={dreamBusy} title="Run dream consolidation">◌</button>
-          <button className="ghost" onClick={refresh} title="Refresh">↻</button>
-          <button className="ghost" onClick={onExport} title="Export .brain">↓</button>
-          <button className="ghost" onClick={onImport} title="Import .brain">↑</button>
+          <button className="ghost" onClick={runDream} disabled={dreamBusy} title="Run dream consolidation">Dream</button>
+          <button className="ghost" onClick={refresh} title="Refresh">Refresh</button>
+          <button className="ghost" onClick={onExport} title="Export .brain">Export</button>
+          <button className="ghost" onClick={onImport} title="Import .brain">Import</button>
         </div>
       </div>
 
@@ -284,6 +413,9 @@ export default function App() {
           <button className={`tab${tab === "dream" ? " active" : ""}`} onClick={() => setTab("dream")}>
             Dream {dreamCount !== null && dreamCount > 0 && <span className="update-badge" style={{ marginLeft: 6 }}>{dreamCount}</span>}
           </button>
+          <button className={`tab${tab === "health" ? " active" : ""}`} onClick={() => setTab("health")}>
+            Health {doctor && <span className="update-badge" style={{ marginLeft: 6 }}>{doctor.score}</span>}
+          </button>
           <button className={`tab${tab === "settings" ? " active" : ""}`} onClick={() => setTab("settings")}>Settings</button>
         </div>
 
@@ -292,16 +424,39 @@ export default function App() {
           <div className="search-results-overlay">
             <div className="sr-header">
               <h3>Search results ({searchResult.evidence.length} matches)</h3>
-              <button className="ghost" onClick={() => setSearchResult(null)}>✕ Close</button>
+              <button className="ghost" onClick={() => setSearchResult(null)}>Close</button>
             </div>
             <div className="sr-list">
+              {searchResult.debug?.why && (
+                <div className="why-panel">
+                  <div className="why-title">Why this memory?</div>
+                  <div className="why-grid">
+                    <div>Intent <strong>{searchResult.debug.why.intent ?? searchResult.intent ?? "unknown"}</strong></div>
+                    <div>Nodes <strong>{searchResult.debug.why.activation?.length ?? 0}</strong></div>
+                    <div>Evidence <strong>{searchResult.debug.why.evidence?.length ?? 0}</strong></div>
+                    <div>Latency <strong>{searchResult.latency_ms ?? 0}ms</strong></div>
+                  </div>
+                  <div className="why-list">
+                    {(searchResult.debug.why.activation ?? []).slice(0, 4).map((node) => (
+                      <span key={node.id}>{node.id} {(node.activation * 100).toFixed(0)}%</span>
+                    ))}
+                  </div>
+                  {searchResult.debug.why.semantic_error && (
+                    <div className="why-error">{searchResult.debug.why.semantic_error}</div>
+                  )}
+                </div>
+              )}
               {searchResult.evidence.map((item, i) => (
                 <div key={i} className="sr-item" onClick={() => { setSelectedId(item.node_id); setSearchResult(null); }}>
                   <div className="sr-meta">
                     <span className="sr-node">{item.node_id}</span>
-                    <span className="sr-score">{item.score ? `${(item.score * 100).toFixed(0)}%` : "match"}</span>
+                    <span className="sr-score">
+                      <button className="ghost small" onClick={(event) => { event.stopPropagation(); sendFeedback(item.id, "useful"); }}>Useful</button>
+                      <button className="ghost small" onClick={(event) => { event.stopPropagation(); sendFeedback(item.id, "ignored"); }}>Ignore</button>
+                      {item.score ? `${(item.score * 100).toFixed(0)}%` : "match"}
+                    </span>
                   </div>
-                  <div className="sr-text">{item.content.length > 200 ? item.content.slice(0, 200) + "…" : item.content}</div>
+                  <div className="sr-text">{item.content.length > 200 ? item.content.slice(0, 200) + "..." : item.content}</div>
                 </div>
               ))}
               {searchResult.evidence.length === 0 && <div className="empty">No matches found.</div>}
@@ -319,7 +474,9 @@ export default function App() {
         {!bootError && (
           <div className="statusbar">
             <span>Memory</span>
-            <code>{version?.workspace_dir ?? "loading…"}</code>
+            <code>{version?.workspace_dir ?? "loading..."}</code>
+            {runtimeStatus && <span title={`${runtimeStatus.command} ${runtimeStatus.args.join(" ")}`}>Sidecar: {runtimeStatus.command.split(/[\\/]/).pop()}</span>}
+            {lastRefreshAt && <span>Last refresh {lastRefreshAt}</span>}
             {mapError && <span className="status-error">{mapError}</span>}
           </div>
         )}
@@ -342,16 +499,16 @@ export default function App() {
                         return (
                           <div key={i} className="review-card" style={{ marginBottom: 12 }}>
                             <div className="rc-content">
-                              Node <strong>{p.node_id}</strong> — redundant items
+                              Node <strong>{p.node_id}</strong> - redundant items
                               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 10 }}>
                                 <div style={{ background: "var(--bg-elev-2)", padding: 14, borderRadius: 8, display: "flex", flexDirection: "column" }}>
-                                  <div style={{ color: "var(--muted)", fontSize: 10, marginBottom: 4, fontWeight: 700 }}>ITEM A · {p.keep_id.slice(-8)}</div>
-                                  <div style={{ fontSize: 12, color: "var(--ink-soft)", flex: 1, lineHeight: 1.5 }}>{keep?.content.slice(0, 200)}…</div>
+                                  <div style={{ color: "var(--muted)", fontSize: 10, marginBottom: 4, fontWeight: 700 }}>ITEM A - {p.keep_id.slice(-8)}</div>
+                                  <div style={{ fontSize: 12, color: "var(--ink-soft)", flex: 1, lineHeight: 1.5 }}>{keep?.content.slice(0, 200)}...</div>
                                   <button className="danger small" style={{ marginTop: 10, alignSelf: "flex-start" }} onClick={() => applyProposal(p, p.keep_id)}>Delete A</button>
                                 </div>
                                 <div style={{ background: "var(--bg-elev-2)", padding: 14, borderRadius: 8, display: "flex", flexDirection: "column" }}>
-                                  <div style={{ color: "var(--muted)", fontSize: 10, marginBottom: 4, fontWeight: 700 }}>ITEM B · {p.drop_id.slice(-8)}</div>
-                                  <div style={{ fontSize: 12, color: "var(--ink-soft)", flex: 1, lineHeight: 1.5 }}>{drop?.content.slice(0, 200)}…</div>
+                                  <div style={{ color: "var(--muted)", fontSize: 10, marginBottom: 4, fontWeight: 700 }}>ITEM B - {p.drop_id.slice(-8)}</div>
+                                  <div style={{ fontSize: 12, color: "var(--ink-soft)", flex: 1, lineHeight: 1.5 }}>{drop?.content.slice(0, 200)}...</div>
                                   <button className="danger small" style={{ marginTop: 10, alignSelf: "flex-start" }} onClick={() => applyProposal(p, p.drop_id)}>Delete B</button>
                                 </div>
                               </div>
@@ -372,7 +529,7 @@ export default function App() {
                           <div key={i} className="review-card" style={{ marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div className="rc-content" style={{ flex: 1 }}>
                               <code style={{ fontSize: 10, color: "var(--muted)" }}>{p.item_id.slice(-12)}</code>
-                              <div style={{ fontSize: 12, color: "var(--ink-soft)", margin: "4px 0" }}>{item?.content.slice(0, 120)}…</div>
+                              <div style={{ fontSize: 12, color: "var(--ink-soft)", margin: "4px 0" }}>{item?.content.slice(0, 120)}...</div>
                               <div style={{ fontSize: 11, color: "var(--muted)" }}>{p.rationale}</div>
                             </div>
                             <button className="danger small" onClick={() => applyProposal(p)}>Delete</button>
@@ -406,7 +563,89 @@ export default function App() {
                     </section>
                   )}
                   {dreamReport.proposals.length === 0 && (
-                    <div className="empty">✓ Memory is well consolidated. No issues found.</div>
+                    <div className="empty">Memory is well consolidated. No issues found.</div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!bootError && tab === "health" && (
+          <div className="layout" style={{ gridTemplateColumns: "1fr" }}>
+            <div className="pane" style={{ borderRight: "none", padding: 20 }}>
+              <h2 style={{ position: "static", background: "transparent" }}>Memory Health</h2>
+              {!doctor && <div className="empty">Health report unavailable.</div>}
+              {doctor && (
+                <div className="health-panel">
+                  <div className={`health-score ${doctor.ok ? "ok" : "warn"}`}>
+                    <strong>{doctor.score}</strong>
+                    <span>{doctor.ok ? "Healthy" : "Needs attention"}</span>
+                  </div>
+                  <div className="health-actions">
+                    <button className="primary" onClick={() => runDoctorFix(false)}>Run safe fixes</button>
+                    <button className="ghost" onClick={() => runDoctorFix(true)}>Fix + warm embeddings</button>
+                    <button className="ghost" onClick={reviewSnapshot}>Compare file</button>
+                    <button className="ghost" onClick={loadSnapshots}>Refresh snapshots</button>
+                  </div>
+                  <div className="health-grid">
+                    {doctor.checks.map((check) => (
+                      <div key={check.id} className={`health-check ${check.ok ? "ok" : "warn"}`}>
+                        <span>{check.ok ? "OK" : "FIX"}</span>
+                        <strong>{check.id.replaceAll("_", " ")}</strong>
+                        <em>{check.detail}</em>
+                      </div>
+                    ))}
+                  </div>
+                  {doctor.suggestions.length > 0 && (
+                    <div className="health-suggestions">
+                      <h3>Suggestions</h3>
+                      {doctor.suggestions.map((suggestion) => <p key={suggestion}>{suggestion}</p>)}
+                    </div>
+                  )}
+                  {snapshotReview && (
+                    <div className="snapshot-section">
+                      <h3>Selective Restore</h3>
+                      <p>{snapshotReview.path.split(/[\\/]/).pop()} - {snapshotReview.diff.summary.items_added} added, {snapshotReview.diff.summary.items_changed} changed, {snapshotReview.diff.summary.items_removed} removed in snapshot.</p>
+                      <div className="snapshot-list">
+                        {[...snapshotReview.diff.items.added, ...snapshotReview.diff.items.changed].slice(0, 30).map((id) => (
+                          <button key={id} className="ghost small" onClick={() => restoreSnapshotItems([id])}>{id}</button>
+                        ))}
+                      </div>
+                      <button className="primary" onClick={() => restoreSnapshotItems([...snapshotReview.diff.items.added, ...snapshotReview.diff.items.changed])}>
+                        Restore all changed/added items
+                      </button>
+                      <button className="ghost" onClick={() => rollbackSnapshot(snapshotReview.path)} style={{ marginLeft: 8 }}>
+                        Full rollback to this snapshot
+                      </button>
+                    </div>
+                  )}
+                  <div className="snapshot-section">
+                    <h3>Safety Snapshots</h3>
+                    {!snapshots && <p>Loading snapshots...</p>}
+                    {snapshots && snapshots.snapshots.length === 0 && <p>No safety snapshots yet. Deletes, replace imports and selective restores create them automatically.</p>}
+                    {snapshots && snapshots.snapshots.length > 0 && (
+                      <div className="snapshot-table">
+                        {snapshots.snapshots.map((snapshot) => (
+                          <div key={snapshot.path} className="snapshot-row">
+                            <div>
+                              <strong>{snapshot.name}</strong>
+                              <span>{new Date(snapshot.modified_at).toLocaleString()} / {(snapshot.bytes / 1024).toFixed(1)} KB</span>
+                            </div>
+                            <button className="ghost small" onClick={() => compareManagedSnapshot(snapshot.path)}>Compare</button>
+                            <button className="danger small" onClick={() => rollbackSnapshot(snapshot.path)}>Rollback</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <small>Directory: {snapshots?.directory ?? (version?.data_dir ? `${version.data_dir}/snapshots` : "loading")}</small>
+                  </div>
+                  {runtimeStatus && (
+                    <div className="health-suggestions">
+                      <h3>Sidecar Runtime</h3>
+                      <p><strong>{runtimeStatus.command}</strong> {runtimeStatus.args.join(" ")}</p>
+                      <p>Memory dir: {runtimeStatus.memory_dir}</p>
+                    </div>
                   )}
                 </div>
               )}
@@ -442,7 +681,10 @@ export default function App() {
             <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
               <div className="map-toolbar">
                 <button className={`ghost small${showItems ? " active" : ""}`} onClick={() => setShowItems(!showItems)}>
-                  {showItems ? "⊟ Hide items" : "⊞ Show items"}
+                  {showItems ? "Hide items" : "Show items"}
+                </button>
+                <button className="ghost small" onClick={() => setLayoutTrigger(t => t + 1)} title="Re-calculate graph layout">
+                  Relayout
                 </button>
               </div>
               <Graph
@@ -454,6 +696,7 @@ export default function App() {
                 showItems={showItems}
                 searchFilter={sidebarFilter}
                 itemCounts={itemCounts}
+                layoutTrigger={layoutTrigger}
               />
             </div>
             <ItemEditor

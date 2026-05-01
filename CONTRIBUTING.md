@@ -20,7 +20,7 @@ this file before sending a PR.
 ## Local setup
 
 ```bash
-git clone https://github.com/Infinition/paradigm-memory.git
+git clone https://github.com/infinition/paradigm-memory.git
 cd paradigm-memory
 npm install
 npm run lint

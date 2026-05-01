@@ -6,11 +6,11 @@ You are installing paradigm-memory, a local-first MCP memory server. Do this saf
 2. Run the one-liner installer for the user's platform:
    - **Windows PowerShell**:
      ```powershell
-     irm https://raw.githubusercontent.com/Infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex
+     irm https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.ps1 | iex
      ```
    - **Linux / macOS**:
      ```bash
-     curl -fsSL https://raw.githubusercontent.com/Infinition/paradigm-memory/main/scripts/installer/install.sh | bash
+     curl -fsSL https://raw.githubusercontent.com/infinition/paradigm-memory/main/scripts/installer/install.sh | bash
      ```
    The installer auto-detects Node, installs `@paradigm-memory/memory-cli` globally, bootstraps `~/.paradigm`, and best-effort registers the MCP with `claude` / `codex` / `gemini` if those CLIs are on the user's PATH. There is **no** `git clone` step.
 3. Confirm the CLI works: `paradigm version`.
@@ -25,7 +25,7 @@ Important:
 
 Contributor / source-checkout install (only if the user explicitly says so):
 ```bash
-git clone https://github.com/Infinition/paradigm-memory.git
+git clone https://github.com/infinition/paradigm-memory.git
 cd paradigm-memory
 bash ./scripts/install.sh   # or .\scripts\install.ps1 on Windows
 ```

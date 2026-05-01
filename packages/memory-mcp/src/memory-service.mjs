@@ -1,6 +1,6 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import * as z from "zod";
@@ -110,6 +110,16 @@ const importSchema = z.object({
   message: "Either input_path or data must be provided"
 });
 
+const snapshotDiffSchema = z.object({
+  left_path: z.string().optional(),
+  right_path: z.string().optional(),
+  left: z.any().optional(),
+  right: z.any().optional(),
+  workspace: workspaceField
+}).refine((value) => (value.left_path || value.left) && (value.right_path || value.right), {
+  message: "Provide left_path or left, and right_path or right"
+});
+
 const versionSchema = z.object({
   workspace: workspaceField
 });
@@ -132,6 +142,47 @@ const importMarkdownSchema = z.object({
 
 const selfUpdateSchema = z.object({
   dry_run: z.boolean().optional()
+});
+
+const doctorSchema = z.object({
+  workspace: workspaceField
+});
+
+const mutationsSchema = z.object({
+  workspace: workspaceField,
+  limit: z.number().int().min(1).max(1000).optional()
+});
+
+const snapshotsSchema = z.object({
+  workspace: workspaceField,
+  limit: z.number().int().min(1).max(200).optional(),
+  include_hash: z.boolean().optional()
+});
+
+const doctorFixSchema = z.object({
+  workspace: workspaceField,
+  repairs: z.array(z.enum(["rebuild_fts", "mirror_json", "warm_embeddings"])).optional(),
+  dry_run: z.boolean().optional()
+});
+
+const snapshotRestoreSchema = z.object({
+  workspace: workspaceField,
+  source_path: z.string().optional(),
+  source: z.any().optional(),
+  item_ids: z.array(z.string().trim().min(1)).optional(),
+  node_ids: z.array(z.string().trim().min(1)).optional(),
+  reason: z.string().optional()
+}).refine((value) => value.source_path || value.source, {
+  message: "Provide source_path or source"
+}).refine((value) => (value.item_ids?.length ?? 0) > 0 || (value.node_ids?.length ?? 0) > 0, {
+  message: "Provide at least one item_id or node_id"
+});
+
+const feedbackSchema = z.object({
+  workspace: workspaceField,
+  item_id: z.string().trim().min(1),
+  signal: z.enum(["useful", "ignored"]),
+  reason: z.string().optional()
 });
 
 function nowIso() {
@@ -221,6 +272,85 @@ function runProcess(command, args, { timeoutMs = 120000 } = {}) {
       resolve({ ok: code === 0, code, stdout, stderr });
     });
   });
+}
+
+function sha256Json(value) {
+  return createHash("sha256").update(JSON.stringify(value), "utf8").digest("hex");
+}
+
+function explainSearch(pack) {
+  return {
+    intent: pack.intent,
+    semantic_error: pack.semanticError,
+    activation: pack.nodes.map((node) => ({
+      id: node.id,
+      activation: node.activation,
+      reason: node.reason ?? null
+    })),
+    evidence: pack.evidence.map((item) => ({
+      id: item.id,
+      node_id: item.node_id,
+      score: item.score,
+      node_activation: item.node_activation,
+      was_activated: item.was_activated,
+      fts_score: item.fts_score ?? 0,
+      importance: item.importance,
+      confidence: item.confidence
+    }))
+  };
+}
+
+function indexSnapshot(snapshot) {
+  const nodes = new Map((snapshot?.tree?.nodes ?? []).map((node) => [node.id, node]));
+  const items = new Map((snapshot?.items ?? []).map((item) => [item.id, item]));
+  return { nodes, items };
+}
+
+function diffMaps(left, right) {
+  const added = [];
+  const removed = [];
+  const changed = [];
+  for (const [id, value] of right.entries()) {
+    if (!left.has(id)) added.push(id);
+    else if (sha256Json(left.get(id)) !== sha256Json(value)) changed.push(id);
+  }
+  for (const id of left.keys()) {
+    if (!right.has(id)) removed.push(id);
+  }
+  return { added, removed, changed };
+}
+
+function clamp(value, min = 0, max = 1) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function snapshotSelection(snapshot, { itemIds = [], nodeIds = [] }) {
+  const indexed = indexSnapshot(snapshot);
+  const selectedItems = itemIds.map((id) => indexed.items.get(id)).filter(Boolean);
+  const selectedNodeIds = new Set(nodeIds);
+  for (const item of selectedItems) selectedNodeIds.add(item.node_id);
+
+  const includeAncestors = (nodeId) => {
+    const parts = nodeId.split(".");
+    for (let index = 1; index <= parts.length; index += 1) {
+      const id = parts.slice(0, index).join(".");
+      if (indexed.nodes.has(id)) selectedNodeIds.add(id);
+    }
+  };
+  for (const id of [...selectedNodeIds]) includeAncestors(id);
+
+  const selectedNodes = [...selectedNodeIds].map((id) => indexed.nodes.get(id)).filter(Boolean);
+  return {
+    format: "paradigm.brain",
+    format_version: snapshot.format_version ?? 1,
+    exported_at: snapshot.exported_at ?? nowIso(),
+    tree: {
+      version: snapshot.tree?.version ?? 1,
+      roots: selectedNodes.filter((node) => !node.parent_id).map((node) => node.id),
+      nodes: selectedNodes
+    },
+    items: selectedItems
+  };
 }
 
 export async function createMemoryService({
@@ -433,7 +563,8 @@ export async function createMemoryService({
         debug: {
           token_estimate: pack.tokenEstimate,
           node_ids_activated: pack.nodes.map(n => n.id),
-          evidence_count: pack.evidence.length
+          evidence_count: pack.evidence.length,
+          why: explainSearch(pack)
         },
         latency_ms: Math.round((performance.now() - started) * 1000) / 1000,
         token_estimate: pack.tokenEstimate,
@@ -472,7 +603,7 @@ export async function createMemoryService({
           intent: pack.intent,
           semantic_error: pack.semanticError,
           activation: result.nodes,
-          retrieval: result.evidence.map((item) => ({ id: item.id, node_id: item.node_id, score: item.score })),
+          retrieval: result.debug.why.evidence,
           context_pack: result.context_pack.map((item) => ({ type: item.type, id: item.id, node_id: item.node_id }))
         },
         result: {
@@ -481,6 +612,180 @@ export async function createMemoryService({
         }
       });
       return result;
+    },
+
+    async doctor(input) {
+      const args = doctorSchema.parse(input ?? {});
+      const atlas = await getAtlas(args.workspace);
+      const nodes = atlas.tree.nodes;
+      const nodeIds = new Set(nodes.map((node) => node.id));
+      const activeItems = atlas.listItems({ limit: 100000, statuses: ["active"] });
+      const proposedItems = atlas.listItems({ limit: 100000, statuses: ["proposed"] });
+      const allVisibleItems = [...activeItems, ...proposedItems];
+      const stats = atlas.memoryStats();
+      const orphanItems = allVisibleItems.filter((item) => !nodeIds.has(item.node_id));
+      const brokenChildren = [];
+
+      for (const node of nodes) {
+        for (const child of node.children ?? []) {
+          if (!nodeIds.has(child)) brokenChildren.push({ node_id: node.id, missing_child_id: child });
+        }
+      }
+
+      const expectedEmbeddings = nodes.length + allVisibleItems.length;
+      const embeddingGap = Math.max(0, expectedEmbeddings - (stats.embeddingCount ?? 0));
+      const checks = [
+        { id: "sqlite_wal", ok: stats.journalMode === "wal", detail: `journal_mode=${stats.journalMode ?? "unknown"}` },
+        { id: "sqlite_busy_timeout", ok: (stats.busyTimeoutMs ?? 0) >= 5000, detail: `busy_timeout=${stats.busyTimeoutMs ?? "unknown"}ms` },
+        { id: "orphan_items", ok: orphanItems.length === 0, detail: `${orphanItems.length} orphan item(s)` },
+        { id: "broken_children", ok: brokenChildren.length === 0, detail: `${brokenChildren.length} broken child link(s)` },
+        { id: "embedding_cache", ok: embeddingGap === 0, detail: `${embeddingGap} missing embedding(s) estimate` }
+      ];
+      const score = Math.round((checks.filter((check) => check.ok).length / checks.length) * 100);
+
+      return {
+        workspace: args.workspace ?? null,
+        data_dir: baseDir,
+        workspace_dir: workspaceDir(baseDir, args.workspace),
+        score,
+        ok: checks.every((check) => check.ok),
+        checks,
+        stats,
+        orphan_items: orphanItems.map((item) => ({ id: item.id, node_id: item.node_id })),
+        broken_children: brokenChildren,
+        suggestions: [
+          ...(embeddingGap ? ["Run `paradigm warm` or call memory_warm after bulk imports."] : []),
+          ...(orphanItems.length ? ["Move or delete orphan items; they cannot be reached from the cognitive map."] : []),
+          ...(brokenChildren.length ? ["Repair node children arrays or recreate the missing nodes."] : [])
+        ]
+      };
+    },
+
+    async doctorFix(input) {
+      const args = doctorFixSchema.parse(input ?? {});
+      const atlas = await getAtlas(args.workspace);
+      const repairs = args.repairs?.length ? args.repairs : ["rebuild_fts", "mirror_json"];
+      const before = await this.doctor({ workspace: args.workspace });
+      const applied = [];
+
+      if (!args.dry_run) {
+        if (repairs.includes("rebuild_fts")) {
+          atlas.rebuildIndexes();
+          applied.push("rebuild_fts");
+        }
+        if (repairs.includes("mirror_json")) {
+          await atlas.reload();
+          applied.push("mirror_json");
+        }
+        if (repairs.includes("warm_embeddings")) {
+          await atlas.warmEmbeddings({});
+          applied.push("warm_embeddings");
+        }
+        await logTrace(args.workspace, {
+          operation: "mcp.memory.doctor_fix",
+          input: args,
+          steps: { repairs },
+          result: { applied }
+        });
+      }
+
+      return {
+        workspace: args.workspace ?? null,
+        dry_run: Boolean(args.dry_run),
+        requested: repairs,
+        applied: args.dry_run ? [] : applied,
+        before,
+        after: args.dry_run ? before : await this.doctor({ workspace: args.workspace })
+      };
+    },
+
+    async stats(input) {
+      const args = doctorSchema.parse(input ?? {});
+      const atlas = await getAtlas(args.workspace);
+      const nodes = atlas.tree.nodes;
+      const activeItems = atlas.listItems({ limit: 100000, statuses: ["active"] });
+      const proposedItems = atlas.listItems({ limit: 100000, statuses: ["proposed"] });
+      const mutations = atlas.listMutations(100000);
+      const itemCountsByNode = {};
+      for (const item of activeItems) itemCountsByNode[item.node_id] = (itemCountsByNode[item.node_id] ?? 0) + 1;
+      const topNodes = Object.entries(itemCountsByNode)
+        .map(([node_id, item_count]) => ({ node_id, item_count }))
+        .sort((a, b) => b.item_count - a.item_count)
+        .slice(0, 10);
+      return {
+        workspace: args.workspace ?? null,
+        data_dir: baseDir,
+        workspace_dir: workspaceDir(baseDir, args.workspace),
+        storage: atlas.memoryStats(),
+        counts: {
+          nodes: nodes.length,
+          active_items: activeItems.length,
+          proposed_items: proposedItems.length,
+          mutations: mutations.length
+        },
+        top_nodes: topNodes,
+        freshness: {
+          min: Math.min(...nodes.map((node) => node.freshness ?? 0)),
+          max: Math.max(...nodes.map((node) => node.freshness ?? 0)),
+          avg: nodes.length ? nodes.reduce((sum, node) => sum + (node.freshness ?? 0), 0) / nodes.length : 0
+        }
+      };
+    },
+
+    async mutations(input) {
+      const args = mutationsSchema.parse(input ?? {});
+      const atlas = await getAtlas(args.workspace);
+      const limit = args.limit ?? 200;
+      const mutations = atlas.listMutations(limit);
+      return {
+        workspace: args.workspace ?? null,
+        count: mutations.length,
+        mutations
+      };
+    },
+
+    async snapshots(input) {
+      const args = snapshotsSchema.parse(input ?? {});
+      const dir = path.join(baseDir, "snapshots");
+      const workspacePrefix = args.workspace ? `${slug(args.workspace)}-` : null;
+      let entries = [];
+      try {
+        entries = await readdir(dir, { withFileTypes: true });
+      } catch {
+        return {
+          workspace: args.workspace ?? null,
+          directory: dir,
+          count: 0,
+          snapshots: []
+        };
+      }
+
+      const rows = [];
+      for (const entry of entries) {
+        if (!entry.isFile() || !entry.name.endsWith(".brain")) continue;
+        if (workspacePrefix && !entry.name.startsWith(workspacePrefix)) continue;
+        const fullPath = path.join(dir, entry.name);
+        const info = await stat(fullPath);
+        const row = {
+          name: entry.name,
+          path: fullPath,
+          bytes: info.size,
+          modified_at: info.mtime.toISOString(),
+          reason: entry.name.replace(/\.brain$/, "").replace(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-?/, "")
+        };
+        if (args.include_hash) {
+          row.sha256 = createHash("sha256").update(await readFile(fullPath)).digest("hex");
+        }
+        rows.push(row);
+      }
+
+      rows.sort((a, b) => b.modified_at.localeCompare(a.modified_at));
+      return {
+        workspace: args.workspace ?? null,
+        directory: dir,
+        count: rows.length,
+        snapshots: rows.slice(0, args.limit ?? 50)
+      };
     },
 
     async read(input) {
@@ -739,6 +1044,7 @@ export async function createMemoryService({
         includeMutations: args.include_mutations ?? false,
         includeDeleted: args.include_deleted ?? true
       });
+      const snapshotHash = sha256Json(snapshot);
       let writtenPath = null;
       if (args.output_path) {
         const resolved = path.resolve(args.output_path);
@@ -751,6 +1057,7 @@ export async function createMemoryService({
         format_version: snapshot.format_version,
         exported_at: snapshot.exported_at,
         stats: snapshot.stats,
+        sha256: snapshotHash,
         output_path: writtenPath,
         snapshot: writtenPath ? null : snapshot
       };
@@ -758,7 +1065,7 @@ export async function createMemoryService({
         operation: "mcp.memory.export",
         input: { output_path: writtenPath, include_mutations: args.include_mutations ?? false },
         steps: { node_count: snapshot.stats.node_count, item_count: snapshot.stats.item_count },
-        result: { output_path: writtenPath }
+        result: { output_path: writtenPath, sha256: snapshotHash }
       });
       return result;
     },
@@ -794,6 +1101,123 @@ export async function createMemoryService({
         source_path: sourcePath,
         snapshot_path: snapshotPath
       };
+    },
+
+    async snapshotDiff(input) {
+      const args = snapshotDiffSchema.parse(input ?? {});
+      const load = async (inline, filePath) => {
+        if (inline) return inline;
+        const raw = await readFile(path.resolve(filePath), "utf8");
+        return JSON.parse(raw);
+      };
+      const left = await load(args.left, args.left_path);
+      const right = await load(args.right, args.right_path);
+      const leftIndex = indexSnapshot(left);
+      const rightIndex = indexSnapshot(right);
+      const nodeDiff = diffMaps(leftIndex.nodes, rightIndex.nodes);
+      const itemDiff = diffMaps(leftIndex.items, rightIndex.items);
+      return {
+        left: {
+          exported_at: left.exported_at ?? null,
+          sha256: sha256Json(left),
+          stats: left.stats ?? null
+        },
+        right: {
+          exported_at: right.exported_at ?? null,
+          sha256: sha256Json(right),
+          stats: right.stats ?? null
+        },
+        nodes: nodeDiff,
+        items: itemDiff,
+        summary: {
+          nodes_added: nodeDiff.added.length,
+          nodes_removed: nodeDiff.removed.length,
+          nodes_changed: nodeDiff.changed.length,
+          items_added: itemDiff.added.length,
+          items_removed: itemDiff.removed.length,
+          items_changed: itemDiff.changed.length
+        }
+      };
+    },
+
+    async snapshotRestore(input) {
+      const args = snapshotRestoreSchema.parse(input ?? {});
+      const atlas = await getAtlas(args.workspace);
+      let source = args.source;
+      let sourcePath = null;
+      if (args.source_path) {
+        sourcePath = path.resolve(args.source_path);
+        const raw = await readFile(sourcePath, "utf8");
+        source = JSON.parse(raw);
+      }
+      const selection = snapshotSelection(source, {
+        itemIds: args.item_ids ?? [],
+        nodeIds: args.node_ids ?? []
+      });
+      const snapshotPath = await writeAutoSnapshot(atlas, args.workspace, "before-selective-restore");
+      const result = await atlas.importSnapshot(selection, {
+        mode: "merge",
+        actor: "mcp",
+        reason: args.reason ?? "selective_snapshot_restore"
+      });
+      await logTrace(args.workspace, {
+        operation: "mcp.memory.snapshot_restore",
+        input: {
+          source_path: sourcePath,
+          item_ids: args.item_ids ?? [],
+          node_ids: args.node_ids ?? []
+        },
+        steps: result,
+        result
+      });
+      return {
+        ...result,
+        node_count: result.importedNodes,
+        item_count: result.importedItems,
+        source_path: sourcePath,
+        snapshot_path: snapshotPath
+      };
+    },
+
+    async feedback(input) {
+      const args = feedbackSchema.parse(input ?? {});
+      const atlas = await getAtlas(args.workspace);
+      const existing = atlas.items.find((item) => item.id === args.item_id);
+      if (!existing) {
+        const error = new Error(`Unknown memory item: ${args.item_id}`);
+        error.code = "unknown_item";
+        throw error;
+      }
+      const useful = args.signal === "useful";
+      const tags = new Set(existing.tags ?? []);
+      tags.delete("feedback:useful");
+      tags.delete("feedback:ignored");
+      tags.add(`feedback:${args.signal}`);
+      const updated = atlas.writeItem({
+        ...existing,
+        tags: [...tags],
+        importance: clamp((existing.importance ?? 0.5) + (useful ? 0.06 : -0.04)),
+        confidence: clamp((existing.confidence ?? 0.8) + (useful ? 0.03 : -0.03)),
+        updated_at: nowIso()
+      }, {
+        actor: "mcp",
+        reason: args.reason ?? `feedback_${args.signal}`,
+        operation: "update"
+      });
+      await logTrace(args.workspace, {
+        operation: "mcp.memory.feedback",
+        input: args,
+        steps: {
+          previous_importance: existing.importance,
+          previous_confidence: existing.confidence
+        },
+        result: {
+          item_id: updated.id,
+          importance: updated.importance,
+          confidence: updated.confidence
+        }
+      });
+      return { item: updated, mutation: atlas.listMutations(1)[0] ?? null };
     },
 
     async importMarkdown(input) {
@@ -850,7 +1274,9 @@ export async function createMemoryService({
         items: atlas.listItems({ limit: 100000, statuses: ["active"] }),
         nodes: atlas.tree.nodes
       };
-      const activeReasoner = await getReasoner().catch(() => null);
+      const activeReasoner = process.env.PARADIGM_DREAM_REASONER === "1"
+        ? await getReasoner().catch(() => null)
+        : null;
       const report = await dream(snapshot, {
         reasoner: activeReasoner,
         duplicates: { similarityThreshold: args.similarity_threshold ?? 0.55 },
