@@ -1,6 +1,6 @@
 [package]
 name = "paradigm-memory"
-version = "0.1.3"
+version = "0.1.4"
 description = "Local-first cognitive memory visualizer."
 authors = ["Fabien POLLY"]
 license = "Apache-2.0"
