@@ -17,16 +17,16 @@
   <img alt="Cross-platform" src="https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey?style=flat-square">
 </p>
 
-> Stop bloating your agent's context with `MEMORY.md`. Give it a navigable cognitive map instead — searched in milliseconds, mutated under audit, owned by you.
+> Stop bloating your agent's context with `MEMORY.md`. Give it a navigable cognitive map instead - searched in milliseconds, mutated under audit, owned by you.
 
 paradigm-memory is a **local-first, MCP-native memory engine** for coding agents. It works with **Claude Code, OpenAI Codex, Cursor, Cline, Continue, Gemini CLI, OpenCode** and anything else that speaks MCP. One SQLite file holds your entire knowledge graph; every mutation is audited; every search returns a token-budgeted context pack the LLM can consume directly.
 
-<!-- TODO: replace these with real screenshots once available
 <p align="center">
-  <img alt="Map view" src="docs/screenshots/map.png" width="48%">
-  <img alt="Health view" src="docs/screenshots/health.png" width="48%">
+<img width="90%"alt="Map view" src="https://github.com/user-attachments/assets/4e08bd6a-f02e-4ccb-9cc9-d530eb13ac36" />
 </p>
--->
+
+
+
 
 ---
 
@@ -46,11 +46,11 @@ Most "AI memory" tools are flat vector stores in a SaaS dashboard. paradigm-memo
 
 **Five things you only get here:**
 
-1. **Cognitive map**, not a vector dump — every fact lives under a node with semantics, importance, freshness, keywords. Activation propagates across the tree, so the LLM gets the *relevant subtree*, not 50 unrelated chunks.
-2. **Forensic audit log** — every `write`, `propose`, `accept`, `reject`, `delete`, `update`, `import` writes an immutable mutation row with actor and reason. You can see exactly when an agent decided your `--no-fund` flag preference and which one.
-3. **Multi-agent + multi-workspace by design** — one MCP process serves N isolated workspaces (`workspace?: string` on every tool). HTTP/SSE bridge lets multiple agents hit the same store simultaneously. SQLite WAL + `busy_timeout` handles concurrent writers cleanly.
-4. **Local-first, no exception** — no telemetry, no analytics, no cloud sync, no phone-home. The only outbound HTTP is the (opt-out) version check against GitHub Releases.
-5. **Auditable consolidation** — the `dream` pass detects duplicates, stale items, overloaded nodes, and orphans. Suggestions are *proposed* mutations you accept manually. Optional local reasoner (Qwen2.5-1.5B WASM) generates summary suggestions, never silent edits.
+1. **Cognitive map**, not a vector dump - every fact lives under a node with semantics, importance, freshness, keywords. Activation propagates across the tree, so the LLM gets the *relevant subtree*, not 50 unrelated chunks.
+2. **Forensic audit log** - every `write`, `propose`, `accept`, `reject`, `delete`, `update`, `import` writes an immutable mutation row with actor and reason. You can see exactly when an agent decided your `--no-fund` flag preference and which one.
+3. **Multi-agent + multi-workspace by design** - one MCP process serves N isolated workspaces (`workspace?: string` on every tool). HTTP/SSE bridge lets multiple agents hit the same store simultaneously. SQLite WAL + `busy_timeout` handles concurrent writers cleanly.
+4. **Local-first, no exception** - no telemetry, no analytics, no cloud sync, no phone-home. The only outbound HTTP is the (opt-out) version check against GitHub Releases.
+5. **Auditable consolidation** - the `dream` pass detects duplicates, stale items, overloaded nodes, and orphans. Suggestions are *proposed* mutations you accept manually. Optional local reasoner (Qwen2.5-1.5B WASM) generates summary suggestions, never silent edits.
 
 ---
 
@@ -96,11 +96,11 @@ Memory lives in `~/.paradigm/` by default. It survives reinstalls and `node_modu
 
 After installing:
 
-1. **Open the desktop app** — `paradigm` (or click the installed shortcut).
-2. **Create a branch** — click `+` next to *Cognitive Map* in the left pane. Name it `projects.my_app`. Add 3-5 keywords.
-3. **Write your first memory** — select the new node, type something in the right-hand editor (e.g. *"This project uses pnpm, not npm"*), click **Write**.
-4. **Search it back** — type `pnpm` in the top search bar. Watch the activation pulse spread across the map. Your item appears with a relevance score.
-5. **Tell your agent about it** — see the next section.
+1. **Open the desktop app** - `paradigm` (or click the installed shortcut).
+2. **Create a branch** - click `+` next to *Cognitive Map* in the left pane. Name it `projects.my_app`. Add 3-5 keywords.
+3. **Write your first memory** - select the new node, type something in the right-hand editor (e.g. *"This project uses pnpm, not npm"*), click **Write**.
+4. **Search it back** - type `pnpm` in the top search bar. Watch the activation pulse spread across the map. Your item appears with a relevance score.
+5. **Tell your agent about it** - see the next section.
 
 That's the loop. Everything else (review queue, dream consolidation, audit log, snapshots, doctor) is for when your store gets bigger.
 
@@ -122,7 +122,7 @@ After durable decisions, facts, preferences, or architecture changes:
 - Use dotted snake_case node ids: `projects.<name>`, `decisions.<area>`, `people.<name>`.
 
 Never dump unrelated memory into the context window. The search results are
-already token-budgeted — use them, don't paraphrase them back.
+already token-budgeted - use them, don't paraphrase them back.
 ```
 
 That's the whole instruction. The agent now has navigable, persistent memory across sessions.
@@ -131,18 +131,18 @@ That's the whole instruction. The agent now has navigable, persistent memory acr
 
 ## The desktop app
 
-`paradigm-memory` ships with a real desktop app (Tauri + React + react-flow), not a webview shim. It's the dogfooding client of the MCP server — anything the GUI does, an agent can do.
+`paradigm-memory` ships with a real desktop app (Tauri + React + react-flow), not a webview shim. It's the dogfooding client of the MCP server - anything the GUI does, an agent can do.
 
 **What's inside:**
 
-- **Map** — hierarchical tree on the left, react-flow nodal graph in the centre, item editor on the right. Drag items between nodes to re-parent.
-- **Search with activation animation** — type a query, see the cognitive map light up node by node as activation propagates.
-- **Review queue** — accept/reject the items your agent proposed.
-- **Audit log** — chronological view of every mutation, filterable by actor / operation / node. Click a row to jump to the item.
-- **Dream** — runs the consolidator, shows duplicates / stale / overloaded / orphans, lets you accept fixes one by one.
-- **Health** — read-only diagnostic + one-click safe repairs (rebuild FTS, refresh JSON mirrors, warm embeddings).
-- **Snapshots** — every destructive operation auto-snapshots first; the Health tab lists snapshots, lets you diff one against the current state, and selectively restore items.
-- **Settings** — workspace switcher, MCP runtime status, env vars, **one-click "Check for updates"** with copy-to-clipboard install commands when an update is available.
+- **Map** - hierarchical tree on the left, react-flow nodal graph in the centre, item editor on the right. Drag items between nodes to re-parent.
+- **Search with activation animation** - type a query, see the cognitive map light up node by node as activation propagates.
+- **Review queue** - accept/reject the items your agent proposed.
+- **Audit log** - chronological view of every mutation, filterable by actor / operation / node. Click a row to jump to the item.
+- **Dream** - runs the consolidator, shows duplicates / stale / overloaded / orphans, lets you accept fixes one by one.
+- **Health** - read-only diagnostic + one-click safe repairs (rebuild FTS, refresh JSON mirrors, warm embeddings).
+- **Snapshots** - every destructive operation auto-snapshots first; the Health tab lists snapshots, lets you diff one against the current state, and selectively restore items.
+- **Settings** - workspace switcher, MCP runtime status, env vars, **one-click "Check for updates"** with copy-to-clipboard install commands when an update is available.
 
 The app speaks JSON-RPC over stdio to the MCP server (the same one your agents use). You can shut down the GUI at any time without affecting agent access.
 
@@ -156,7 +156,7 @@ paradigm-memory is built for the case where **multiple agents and humans share t
 - **Concurrent agents.** SQLite is opened in WAL journal mode with a 5-second busy timeout. Multiple agents (Claude Code in one terminal, Codex in another, Cursor in your IDE) can read and write simultaneously without conflict.
 - **HTTP/SSE bridge.** For clients that cannot spawn a stdio MCP child, run `paradigm serve` and point them at `http://127.0.0.1:8765`. Loopback by default; non-loopback binds require a Bearer token (`PARADIGM_HTTP_TOKEN`).
 - **Audit per actor.** Every mutation row carries an `actor` field. You can grep `memory_mutations` to see exactly which agent (or human) did what, when, and why.
-- **Conflict-free re-parenting.** Moving items, renaming nodes, deleting branches — all wrapped in SQL transactions. If an operation fails midway, the store rolls back and the audit log records nothing.
+- **Conflict-free re-parenting.** Moving items, renaming nodes, deleting branches - all wrapped in SQL transactions. If an operation fails midway, the store rolls back and the audit log records nothing.
 - **`.brain` snapshots.** Export the full memory as a single versioned JSON file. Pass it to a teammate, version it in git, archive it before a risky operation. Import with `merge` (safe upsert) or `replace` (destructive, auto-snapshots first).
 
 **Real-world setup:**
@@ -234,33 +234,33 @@ All commands accept `--workspace <name>` and `--dir <path>`.
 
 | Tool | Mutation |
 |---|---|
-| `memory_version` | — |
-| `memory_update_check` | — |
+| `memory_version` | - |
+| `memory_update_check` | - |
 | `memory_self_update` | guarded |
-| `memory_search` | — |
-| `memory_tree` | — |
-| `memory_read` | — |
+| `memory_search` | - |
+| `memory_tree` | - |
+| `memory_read` | - |
 | `memory_propose_write` | `propose` |
 | `memory_write` | `write` |
 | `memory_review` | `accept` / `reject` |
-| `memory_list_proposed` | — |
+| `memory_list_proposed` | - |
 | `memory_delete` | `delete` (auto-snapshot) |
 | `memory_update_item` | `update` |
 | `memory_move_item` | `update` |
 | `memory_create_node` | `create_node` |
 | `memory_update_node` | `update` |
 | `memory_delete_node` | `delete` (children re-parented) |
-| `memory_export` | — |
+| `memory_export` | - |
 | `memory_import` | `import` (auto-snapshot in `replace`) |
 | `memory_import_markdown` | `write` / `propose` |
-| `memory_dream` | — |
-| `memory_warm` | — |
-| `memory_doctor` | — |
+| `memory_dream` | - |
+| `memory_warm` | - |
+| `memory_doctor` | - |
 | `memory_doctor_fix` | varies |
-| `memory_stats` | — |
-| `memory_mutations` | — |
-| `memory_snapshots` | — |
-| `memory_snapshot_diff` | — |
+| `memory_stats` | - |
+| `memory_mutations` | - |
+| `memory_snapshots` | - |
+| `memory_snapshot_diff` | - |
 | `memory_snapshot_restore` | `import` |
 | `memory_feedback` | `feedback` |
 
@@ -280,7 +280,7 @@ The one-line installer auto-registers the MCP with Claude / Codex / Gemini if th
 claude mcp add --scope user paradigm-memory paradigm-memory-mcp
 ```
 
-**OpenAI Codex** — `~/.codex/config.toml`:
+**OpenAI Codex** - `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.paradigm-memory]
@@ -290,7 +290,7 @@ command = "paradigm-memory-mcp"
 PARADIGM_MEMORY_DIR = "/absolute/path/to/.paradigm"
 ```
 
-**Gemini CLI** — `~/.gemini/settings.json`:
+**Gemini CLI** - `~/.gemini/settings.json`:
 
 ```json
 {
@@ -324,14 +324,14 @@ The bridge binds to `127.0.0.1` by default. Binding to any non-loopback host req
 
 ## How it works (60 seconds)
 
-1. **Lexical retrieval** — SQLite FTS5 with real `bm25` scoring, normalised per batch. Boolean operators (`AND`, `OR`, `NOT`), phrases (`"..."`), boost (`+term`), exclude (`-term`).
-2. **Semantic retrieval** — cosine similarity on embeddings cached in SQLite (LRU in-memory on top). Default model: `Xenova/all-MiniLM-L6-v2` (90 MB, ONNX/WASM, runs on CPU). Optional Ollama (`nomic-embed-text`) or off entirely.
-3. **Cognitive-map activation** — for each query, every node gets an activation score from its label, keywords, and embedding distance. Three gates: open (≥ 0.75) → fully expanded, latent (≥ 0.45) → kept as candidate, ignored (< 0.25) → pruned.
-4. **Hybrid scoring** — final item score is a weighted combo of FTS bm25, lexical match, parent activation, importance, confidence, and a substring boost. Items in non-activated branches stay reachable when a query has no traction on the map.
-5. **Token-budgeted context pack** — the search result is shaped into a single object the LLM can consume: activated nodes (one-liners), evidence items (full text), and a soft token cap.
-6. **Optional dream pass** — heuristic detection of duplicates, stale items, overloaded nodes, orphans. With the optional Qwen2.5-1.5B WASM reasoner, also produces suggested summaries for overloaded nodes.
+1. **Lexical retrieval** - SQLite FTS5 with real `bm25` scoring, normalised per batch. Boolean operators (`AND`, `OR`, `NOT`), phrases (`"..."`), boost (`+term`), exclude (`-term`).
+2. **Semantic retrieval** - cosine similarity on embeddings cached in SQLite (LRU in-memory on top). Default model: `Xenova/all-MiniLM-L6-v2` (90 MB, ONNX/WASM, runs on CPU). Optional Ollama (`nomic-embed-text`) or off entirely.
+3. **Cognitive-map activation** - for each query, every node gets an activation score from its label, keywords, and embedding distance. Three gates: open (≥ 0.75) → fully expanded, latent (≥ 0.45) → kept as candidate, ignored (< 0.25) → pruned.
+4. **Hybrid scoring** - final item score is a weighted combo of FTS bm25, lexical match, parent activation, importance, confidence, and a substring boost. Items in non-activated branches stay reachable when a query has no traction on the map.
+5. **Token-budgeted context pack** - the search result is shaped into a single object the LLM can consume: activated nodes (one-liners), evidence items (full text), and a soft token cap.
+6. **Optional dream pass** - heuristic detection of duplicates, stale items, overloaded nodes, orphans. With the optional Qwen2.5-1.5B WASM reasoner, also produces suggested summaries for overloaded nodes.
 
-Everything fits in one SQLite file. No `node-gyp`, no `better-sqlite3`, no native compile — Node 22 ships its own SQLite.
+Everything fits in one SQLite file. No `node-gyp`, no `better-sqlite3`, no native compile - Node 22 ships its own SQLite.
 
 ---
 
@@ -339,7 +339,7 @@ Everything fits in one SQLite file. No `node-gyp`, no `better-sqlite3`, no nativ
 
 The desktop app's **Settings → Updates** panel calls the GitHub Release version check, shows a diff, and exposes click-to-copy install commands.
 
-Manual update — re-run the one-liner installer:
+Manual update - re-run the one-liner installer:
 
 ```bash
 # Linux / macOS
@@ -405,7 +405,7 @@ Field notes for things that go sideways: [`docs/OPERATIONS.md`](docs/OPERATIONS.
                              │ sidecar (stdio JSON-RPC)
 ┌────────────────────────────┴────────────────────────────┐
 │  @paradigm-memory/memory   (Tauri + React + react-flow) │
-│  Desktop app — same MCP, different surface              │
+│  Desktop app - same MCP, different surface              │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -423,10 +423,10 @@ Field notes for things that go sideways: [`docs/OPERATIONS.md`](docs/OPERATIONS.
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the full picture. Highlights of what's coming:
 
-- **v0.2.x** — auto-keywords (TF-IDF on items), hashtag engine, Obsidian-style `[[links]]`, `paradigm doctor` deeper checks
-- **v0.3** — multi-agent collaboration features (read locks, conflict detection, optional remote `.brain` sync)
-- **v0.4** — sleep mode (cron / on-idle dream pass with the local reasoner)
-- **v0.5+** — vector index (HNSW / `sqlite-vec`) past 10k items, browser extension importer
+- **v0.2.x** - auto-keywords (TF-IDF on items), hashtag engine, Obsidian-style `[[links]]`, `paradigm doctor` deeper checks
+- **v0.3** - multi-agent collaboration features (read locks, conflict detection, optional remote `.brain` sync)
+- **v0.4** - sleep mode (cron / on-idle dream pass with the local reasoner)
+- **v0.5+** - vector index (HNSW / `sqlite-vec`) past 10k items, browser extension importer
 
 ---
 
