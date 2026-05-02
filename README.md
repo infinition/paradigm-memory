@@ -5,6 +5,10 @@
 <h1 align="center">paradigm-memory</h1>
 
 <p align="center">
+https://infinition.github.io/paradigm-memory/
+</p>
+
+<p align="center">
   <strong>The cognitive memory layer your AI agents have been missing.</strong><br>
   Local-first. Auditable. Multi-agent. Zero cloud.
 </p>
