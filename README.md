@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="220" height="220" alt="paradigm-memory" src="https://github.com/user-attachments/assets/4727027a-4712-4781-a51b-fd784f5fece1" />
+  <img src=".github/paradigm-memory.png" alt="paradigm-memory icon" width="220" height="220" />
 </p>
 
 <h1 align="center">paradigm-memory</h1>
